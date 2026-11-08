@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block title %}Create account{% endblock %}
+{% block body %}<div class="auth card"><h1>Create your account</h1>
+<form method="post"><input type="hidden" name="csrf" value="{{ csrf_token() }}">
+<label for="fn">Full name</label><input id="fn" name="full_name" required maxlength="80" value="{{ form.get('full_name','') }}">
+<label for="em">Email</label><input id="em" name="email" type="email" required maxlength="120" value="{{ form.get('email','') }}">
+<label for="un">Username</label><input id="un" name="username" required maxlength="30" pattern="[a-z0-9_]{3,30}" value="{{ form.get('username','') }}"><span class="small muted">Lowercase letters, digits and underscore.</span>
+<div class="row"><div><label for="ci">City</label><select id="ci" name="city" required>{% for c in cities %}<option {{ 'selected' if form.get('city')==c }}>{{ c }}</option>{% endfor %}</select></div>
+<div><label for="ag">Age (optional)</label><input id="ag" name="age" inputmode="numeric" maxlength="3" value="{{ form.get('age','') }}"></div>
+<div><label for="ge">Gender</label><select id="ge" name="gender">{% for g in ['unknown','female','male'] %}<option {{ 'selected' if form.get('gender')==g }}>{{ g }}</option>{% endfor %}</select></div></div>
+<label for="pw">Password (min 8 characters)</label><input id="pw" name="password" type="password" required minlength="8" maxlength="200" autocomplete="new-password">
+<label for="cf">Confirm password</label><input id="cf" name="confirm" type="password" required minlength="8" maxlength="200" autocomplete="new-password">
+<p><button type="submit">Create account</button> <a class="small" href="{{ url_for('login') }}">Back to sign in</a></p></form></div>{% endblock %}

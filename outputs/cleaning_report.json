@@ -1,0 +1,18 @@
+{
+  "customers": {
+    "city_rows_changed": 476,
+    "gender_rows_changed": 950,
+    "age_impossible_set_missing": 6,
+    "age_missing_before_fill": 67
+  },
+  "orders": {
+    "raw_rows": 13084,
+    "exact_duplicates_removed": 119,
+    "superseded_order_id_rows_removed": 656,
+    "clean_rows": 12309,
+    "invalid_amounts_filled": 112,
+    "negative_delivery_set_missing": 105,
+    "completed_delivery_filled_with_category_median": 774,
+    "cancelled_delivery_left_missing": 1199
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "cohort_rows": 1156,
+  "lapsed": 443,
+  "lapse_rate": 0.38321799307958476,
+  "train_rows": 924,
+  "test_rows": 232,
+  "latest_feature_order_ts": "2025-08-31 22:35:45",
+  "models": {
+    "logistic": {
+      "best_params": {
+        "model__C": 100
+      },
+      "cv_f1": 0.650552962900789,
+      "precision": 0.6444444444444445,
+      "recall": 0.651685393258427,
+      "f1": 0.6480446927374302,
+      "accuracy": 0.728448275862069,
+      "confusion_matrix": [
+        [
+          111,
+          32
+        ],
+        [
+          31,
+          58
+        ]
+      ]
+    },
+    "forest": {
+      "best_params": {
+        "model__max_depth": 8,
+        "model__min_samples_leaf": 10
+      },
+      "cv_f1": 0.6865517479789224,
+      "precision": 0.6333333333333333,
+      "recall": 0.6404494382022472,
+      "f1": 0.6368715083798883,
+      "accuracy": 0.7198275862068966,
+      "confusion_matrix": [
+        [
+          110,
+          33
+        ],
+        [
+          32,
+          57
+        ]
+      ]
+    }
+  },
+  "baselines": {
+    "majority_class (predict never lapsed)": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "accuracy": 0.6163793103448276,
+      "confusion_matrix": [
+        [
+          143,
+          0
+        ],
+        [
+          89,
+          0
+        ]
+      ]
+    },
+    "always_lapsed": {
+      "precision": 0.38362068965517243,
+      "recall": 1.0,
+      "f1": 0.5545171339563862,
+      "accuracy": 0.38362068965517243,
+      "confusion_matrix": [
+        [
+          0,
+          143
+        ],
+        [
+          0,
+          89
+        ]
+      ]
+    }
+  },
+  "selected_model": "forest",
+  "selection_rule": "highest 5-fold CV F1 on the training set",
+  "oversampling": {
+    "train_rows_before": 924,
+    "train_rows_after": 1140,
+    "train_lapsed_before": 354,
+    "train_lapsed_after": 570,
+    "logistic": {
+      "precision": 0.5891472868217055,
+      "recall": 0.8539325842696629,
+      "f1": 0.6972477064220184,
+      "accuracy": 0.7155172413793104,
+      "confusion_matrix": [
+        [
+          90,
+          53
+        ],
+        [
+          13,
+          76
+        ]
+      ]
+    },
+    "forest": {
+      "precision": 0.5581395348837209,
+      "recall": 0.8089887640449438,
+      "f1": 0.6605504587155964,
+      "accuracy": 0.6810344827586207,
+      "confusion_matrix": [
+        [
+          86,
+          57
+        ],
+        [
+          17,
+          72
+        ]
+      ]
+    }
+  },
+  "reload_predictions_identical": true,
+  "retention_list_rows": 10
+}

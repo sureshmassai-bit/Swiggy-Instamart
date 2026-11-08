@@ -1,0 +1,47 @@
+{
+  "token_limit_200": {
+    "status": "FALLBACK_TOKEN_LIMIT",
+    "tokens_used": 354,
+    "tools": [
+      "get_order",
+      "search_policy"
+    ],
+    "refunds_issued": 0
+  },
+  "timeout_0": {
+    "status": "FALLBACK_TIMEOUT",
+    "llm_calls": 0,
+    "tools": []
+  },
+  "crash_resume": {
+    "error": "crash after tool #2 (checkpoint saved)",
+    "checkpoint_tools": [
+      "get_order",
+      "search_policy"
+    ],
+    "refunds_before_resume": 0,
+    "status": "REFUND",
+    "refund_inr": 128.25,
+    "tools_executed_after_resume": [
+      "get_order",
+      "search_policy",
+      "calculate_refund",
+      "issue_refund"
+    ],
+    "llm_calls_total": 5,
+    "issue_refund_ledger_entries": 1,
+    "second_resume_same_result": true,
+    "ledger_entries_after_second_resume": 1
+  },
+  "crash_after_payment_before_checkpoint": {
+    "status": "REFUND",
+    "refund_inr": 128.25,
+    "issue_refund_ledger_entries": 1,
+    "last_observation": {
+      "refund_inr": 128.25,
+      "status": "already_issued",
+      "duplicate_prevented": true
+    }
+  },
+  "s1_model_calls": 5
+}

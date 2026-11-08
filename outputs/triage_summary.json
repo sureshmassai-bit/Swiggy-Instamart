@@ -1,0 +1,109 @@
+{
+  "few_shot": {
+    "prompt_variant": "few_shot",
+    "tickets": 164,
+    "status_counts": {
+      "classified_json": 135,
+      "classified_keyword": 12,
+      "flagged_invalid_output": 9,
+      "skipped_empty": 4,
+      "flagged_long": 4
+    },
+    "route_counts": {
+      "support_queue": 102,
+      "security_team": 34,
+      "human_review": 17,
+      "premium_desk": 11
+    },
+    "tickets_sent_to_model": 156,
+    "correct": 147,
+    "accuracy_of_sent": 0.9423,
+    "accuracy_of_classified": 1.0,
+    "model_calls": 175,
+    "retries": 19,
+    "transient_failures": 19,
+    "unrecovered_failures": 0,
+    "tokens": 12520,
+    "backoff_seconds": 0.952,
+    "estimated_cost_usd": 0.00626,
+    "token_budget": 100000,
+    "cost_budget_usd": 0.05,
+    "redactions": {
+      "email": 55,
+      "phone": 91,
+      "order_id": 132
+    },
+    "human_handoffs": 17
+  },
+  "zero_shot": {
+    "prompt_variant": "zero_shot",
+    "tickets": 164,
+    "status_counts": {
+      "classified_json": 135,
+      "classified_keyword": 12,
+      "flagged_invalid_output": 9,
+      "skipped_empty": 4,
+      "flagged_long": 4
+    },
+    "route_counts": {
+      "support_queue": 112,
+      "security_team": 23,
+      "human_review": 17,
+      "premium_desk": 12
+    },
+    "tickets_sent_to_model": 156,
+    "correct": 126,
+    "accuracy_of_sent": 0.8077,
+    "accuracy_of_classified": 0.8571,
+    "model_calls": 175,
+    "retries": 19,
+    "transient_failures": 19,
+    "unrecovered_failures": 0,
+    "tokens": 7372,
+    "backoff_seconds": 0.952,
+    "estimated_cost_usd": 0.003686,
+    "token_budget": 100000,
+    "cost_budget_usd": 0.05,
+    "redactions": {
+      "email": 55,
+      "phone": 91,
+      "order_id": 132
+    },
+    "human_handoffs": 17
+  },
+  "budget_demo_1000_tokens": {
+    "prompt_variant": "few_shot",
+    "tickets": 164,
+    "status_counts": {
+      "budget_exhausted": 145,
+      "classified_json": 11,
+      "skipped_empty": 4,
+      "flagged_long": 4
+    },
+    "route_counts": {
+      "human_review": 153,
+      "support_queue": 7,
+      "security_team": 3,
+      "premium_desk": 1
+    },
+    "tickets_sent_to_model": 11,
+    "correct": 11,
+    "accuracy_of_sent": 1.0,
+    "accuracy_of_classified": 1.0,
+    "model_calls": 12,
+    "retries": 1,
+    "transient_failures": 1,
+    "unrecovered_failures": 0,
+    "tokens": 880,
+    "backoff_seconds": 0.053,
+    "estimated_cost_usd": 0.00044,
+    "token_budget": 1000,
+    "cost_budget_usd": 0.05,
+    "redactions": {
+      "email": 55,
+      "phone": 91,
+      "order_id": 132
+    },
+    "human_handoffs": 153
+  }
+}

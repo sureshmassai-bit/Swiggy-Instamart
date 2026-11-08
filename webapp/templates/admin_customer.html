@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% from "_macros.html" import status_chip, csrf %}{% block title %}{{ c.customer_id }}{% endblock %}
+{% block body %}<h1>Customer {{ c.customer_id }}{% if c.full_name %} · {{ c.full_name }}{% endif %}</h1>
+<div class="grid g2"><div class="card"><h2>Profile</h2><table>
+<tr><th>City</th><td>{{ c.city }}</td></tr><tr><th>Age / gender</th><td>{{ c.age or '—' }} / {{ c.gender }}</td></tr>
+<tr><th>Segment</th><td>{{ seg }}</td></tr>
+<tr><th>Source</th><td>{{ 'Registered on this site' if c.source == 'web' else 'Part A customer data' }}</td></tr>
+<tr><th>Login</th><td>{% if user %}{{ user.username }} · {{ user.email }} · {{ 'active' if user.active else 'disabled' }}{% else %}no login{% endif %}</td></tr></table></div>
+<div class="card"><h2>Order history summary</h2><table><tr><th>Orders</th><td>{{ summary.n }}</td></tr><tr><th>Completed / cancelled</th><td>{{ summary.done or 0 }} / {{ summary.canc or 0 }}</td></tr><tr><th>Completed revenue</th><td>{{ summary.rev|inr }}</td></tr></table></div></div>
+<div class="card"><h2>Orders placed on this site</h2><div class="tw"><table><tr><th>Order</th><th>Product</th><th>Qty</th><th>Amount</th><th>Placed</th><th>Status</th></tr>
+{% for o in web %}<tr><td>{{ o.order_no|web_order }}</td><td>{{ o.product_name }}</td><td>{{ o.quantity }}</td><td>{{ o.amount|inr }}</td><td>{{ o.created_at }}</td><td>{{ status_chip(o.status) }}</td></tr>
+{% else %}<tr><td colspan="6" class="muted">None.</td></tr>{% endfor %}</table></div></div>
+<div class="card"><h2>Latest historical orders</h2><div class="tw"><table><tr><th>Order</th><th>Product</th><th>Qty</th><th>Amount</th><th>Date</th><th>Delivery (min)</th><th>Status</th></tr>
+{% for o in hist %}<tr><td>{{ o.order_id }}</td><td>{{ o.product_name }}</td><td>{{ o.quantity }}</td><td>{{ o.order_amount|inr }}</td><td>{{ o.order_ts }}</td><td>{{ o.delivery_minutes if o.delivery_minutes is not none else '—' }}</td><td>{{ status_chip(o.status) }}</td></tr>
+{% else %}<tr><td colspan="7" class="muted">None.</td></tr>{% endfor %}</table></div></div>
+<div class="card"><h2>Tickets</h2><div class="tw"><table><tr><th>Ticket</th><th>Subject</th><th>Category</th><th>Status</th></tr>
+{% for t in tix %}<tr><td><a href="{{ url_for('ticket_detail', ticket_no=t.ticket_no) }}">{{ t.ticket_no|tkt }}</a></td><td>{{ t.subject }}</td><td>{{ t.category or '—' }}</td><td>{{ status_chip(t.status) }}</td></tr>
+{% else %}<tr><td colspan="4" class="muted">None.</td></tr>{% endfor %}</table></div></div>{% endblock %}

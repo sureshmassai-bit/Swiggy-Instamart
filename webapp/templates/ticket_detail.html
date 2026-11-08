@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% from "_macros.html" import status_chip, csrf %}{% block title %}{{ t.ticket_no|tkt }}{% endblock %}
+{% block body %}<h1>{{ t.ticket_no|tkt }} · {{ t.subject }}</h1>
+<div class="grid g2">
+<div class="card"><h2>Conversation</h2>
+{% for m in msgs %}{% set is_bot = m.username == bot_username %}<div class="msg {{ 'bot' if is_bot else m.author_role }}"><div class="meta">{% if is_bot %}🤖 Instamart Copilot Assistant (bot){% else %}{{ m.full_name }} ({{ 'support team' if m.author_role == 'admin' else 'customer' }}){% endif %} · {{ m.created_at }} UTC</div>{{ m.message }}</div>{% endfor %}
+
+{% if t.status != 'closed' or me.role == 'admin' %}
+<form method="post" action="{{ url_for('ticket_reply', ticket_no=t.ticket_no) }}">{{ csrf() }}<label for="m">{{ 'Reply to customer' if me.role == 'admin' else 'Add a follow-up' }}</label><textarea id="m" name="message" required maxlength="2000"></textarea><p><button type="submit">Send</button></p></form>
+{% else %}<p class="muted">This ticket is closed.</p>{% endif %}</div>
+<div class="card"><h2>Details</h2><table>
+<tr><th>Status</th><td>{{ status_chip(t.status) }}</td></tr><tr><th>Order</th><td>{{ t.order_ref or '—' }}</td></tr><tr><th>Raised</th><td>{{ t.created_at }} UTC</td></tr>
+{% if me.role == 'admin' %}<tr><th>Customer</th><td><a href="{{ url_for('admin_customer', customer_id=t.customer_id) }}">{{ t.customer_id }}</a> ({{ seg[0] }})</td></tr>
+<tr><th>Auto category</th><td>{{ t.category or 'not classified' }} <span class="muted small">({{ t.triage_status|pretty }})</span></td></tr>
+<tr><th>Suggested route</th><td>{{ t.route|pretty }} {% if t.priority == 'HIGH' %}<span class="chip hi">HIGH</span>{% endif %}</td></tr>{% endif %}</table>
+{% if me.role == 'admin' %}<form method="post" action="{{ url_for('ticket_status', ticket_no=t.ticket_no) }}" class="row">{{ csrf() }}
+<div><label for="st">Set status</label><select id="st" name="status">{% for s in TICKET_STATUSES %}<option {{ 'selected' if s==t.status }}>{{ s }}</option>{% endfor %}</select></div><div class="fit"><button class="ghost" type="submit">Update</button></div></form>{% endif %}</div></div>{% endblock %}

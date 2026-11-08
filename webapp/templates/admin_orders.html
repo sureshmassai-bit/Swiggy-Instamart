@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% from "_macros.html" import status_chip, csrf, pager %}{% block title %}Orders{% endblock %}
+{% block body %}<h1>Orders placed on this site</h1>
+<p><a class="chip {{ 'hi' if not status }}" href="{{ url_for('admin_orders') }}">All</a> {% for s in ORDER_STATUSES %}<a class="chip {{ 'hi' if s==status }}" href="{{ url_for('admin_orders', status=s) }}">{{ s|pretty }}</a> {% endfor %}</p>
+<div class="card tw"><table><tr><th>Order</th><th>Customer</th><th>Product</th><th>Qty</th><th>Amount</th><th>Placed</th><th>Status</th></tr>
+{% for o in rows %}<tr><td>{{ o.order_no|web_order }}</td><td><a href="{{ url_for('admin_customer', customer_id=o.customer_id) }}">{{ o.customer_id }}</a> <span class="muted small">({{ o.username }})</span></td><td>{{ o.product_name }}</td><td>{{ o.quantity }}</td><td>{{ o.amount|inr }}</td><td class="small">{{ o.created_at }}</td>
+<td><form method="post" class="inline" action="{{ url_for('admin_order_status', order_no=o.order_no) }}">{{ csrf() }}<select name="status" aria-label="Order status">{% for s in ORDER_STATUSES %}<option value="{{ s }}" {{ 'selected' if s==o.status }}>{{ s|pretty }}</option>{% endfor %}</select> <button class="ghost" type="submit">Save</button></form></td></tr>
+{% else %}<tr><td colspan="7" class="muted">No orders.</td></tr>{% endfor %}</table>{{ pager(page, pages, total, 'admin_orders', status=status) }}</div>{% endblock %}

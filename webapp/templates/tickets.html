@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% from "_macros.html" import status_chip, handler_chip %}{% block title %}Support tickets{% endblock %}
+{% block body %}<h1>Support tickets</h1>
+<div class="grid g2">
+<div class="card"><h2>Need help?</h2><p>Tap the <b>💬 Help</b> bubble at the bottom right. Our assistant answers questions about orders, refunds, delivery and payments straight away.</p>
+<p>If it cannot solve your problem, one tap turns the conversation into a ticket for a support agent, so you never have to explain twice.</p><p><button type="button" data-chat-open>Open help chat</button></p></div>
+<div class="card"><h2>Your tickets</h2><div class="tw"><table><tr><th>Ticket</th><th>Subject</th><th>Status</th><th>Updated</th></tr>
+{% for t in tickets %}<tr><td><a href="{{ url_for('ticket_detail', ticket_no=t.ticket_no) }}">{{ t.ticket_no|tkt }}</a></td><td>{{ t.subject }}</td><td>{{ status_chip(t.status) }}</td><td class="small">{{ t.updated_at }}</td></tr>
+{% else %}<tr><td colspan="4" class="muted">No tickets yet.</td></tr>{% endfor %}</table></div></div></div>{% endblock %}

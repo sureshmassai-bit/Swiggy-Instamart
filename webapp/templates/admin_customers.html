@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% from "_macros.html" import pager %}{% block title %}Customers{% endblock %}
+{% block body %}<h1>Customers</h1>
+<form class="card row" method="get"><div><label for="q">Search ID, name or username</label><input id="q" name="q" value="{{ q }}"></div>
+<div><label for="c">City</label><select id="c" name="city"><option value="">All</option>{% for x in cities %}<option {{ 'selected' if x==city }}>{{ x }}</option>{% endfor %}</select></div>
+<div><label for="sg">Segment</label><select id="sg" name="segment"><option value="">All</option>{% for x in segs %}<option {{ 'selected' if x==seg }}>{{ x }}</option>{% endfor %}</select></div>
+<div class="fit"><button type="submit">Filter</button></div></form>
+<div class="card tw"><table><tr><th>Customer</th><th>City</th><th>Age</th><th>Segment</th><th>Login</th><th>Past orders</th><th>Revenue</th><th>Web orders</th><th>Tickets</th></tr>
+{% for r in rows %}<tr><td><a href="{{ url_for('admin_customer', customer_id=r.customer_id) }}">{{ r.customer_id }}</a>{% if r.full_name %}<div class="small muted">{{ r.full_name }}</div>{% endif %}</td>
+<td>{{ r.city }}</td><td>{{ r.age or '—' }}</td><td>{{ r.segment_name or '—' }}</td><td>{{ r.username or '—' }}</td>
+<td>{{ r.hist_orders }}</td><td>{{ r.hist_rev|inr }}</td><td>{{ r.web_orders }}</td><td>{{ r.tickets }}</td></tr>
+{% else %}<tr><td colspan="9" class="muted">No customers match.</td></tr>{% endfor %}</table>
+{{ pager(page, pages, total, 'admin_customers', q=q, city=city, segment=seg) }}</div>{% endblock %}

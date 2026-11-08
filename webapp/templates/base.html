@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Instamart Copilot{% endblock %} · InstamartCopilot</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23fc8019'/%3E%3Cstop offset='1' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cpath d='M12 18h7l5 20h22l5-15H22' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='28' cy='47' r='4' fill='white'/%3E%3Ccircle cx='43' cy='47' r='4' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body>
+<header class="top"><div class="in">
+  <a class="brand" href="{{ url_for('index') }}">Instamart <span>Copilot</span></a>
+  {% if me %}
+    {% if me.role == 'admin' %}
+      <a class="nav {{ 'on' if request.path == '/admin' }}" href="{{ url_for('admin_home') }}">Dashboard</a>
+      <a class="nav {{ 'on' if request.path.startswith('/admin/customers') }}" href="{{ url_for('admin_customers') }}">Customers</a>
+      <a class="nav {{ 'on' if request.path.startswith('/admin/orders') }}" href="{{ url_for('admin_orders') }}">Orders</a>
+      <a class="nav {{ 'on' if request.path.startswith('/admin/tickets') or request.path.startswith('/tickets') }}" href="{{ url_for('admin_tickets') }}">Tickets</a>
+    {% else %}
+      <a class="nav {{ 'on' if request.path == '/home' }}" href="{{ url_for('user_home') }}">Home</a>
+      <a class="nav {{ 'on' if request.path.startswith('/shop') }}" href="{{ url_for('shop') }}">Order products</a>
+      <a class="nav {{ 'on' if request.path.startswith('/orders') }}" href="{{ url_for('my_orders') }}">My orders</a>
+      <a class="nav {{ 'on' if request.path.startswith('/tickets') }}" href="{{ url_for('my_tickets') }}">Support tickets</a>
+    {% endif %}
+    <span class="sp"></span><span class="who">{{ me.full_name }} · {{ me.role }}</span>
+    <form class="inline" method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><button class="ghost" type="submit">Sign out</button></form>
+  {% endif %}
+</div></header>
+<main>
+  {% with msgs = get_flashed_messages(with_categories=true) %}{% for cat, m in msgs %}<div class="flash {{ cat }}" role="status">{{ m }}</div>{% endfor %}{% endwith %}
+  {% block body %}{% endblock %}
+</main>
+{% if me and me.role == 'user' %}
+<button type="button" id="chat-fab" class="chat-fab" aria-label="Open help chat" aria-expanded="false" data-chat-open>💬 Help</button>
+<section id="chat-panel" class="chat-panel" hidden aria-label="Help chat" data-csrf="{{ csrf_token() }}" data-chat-url="{{ url_for('chat') }}" data-solved-url="{{ url_for('chat_solved') }}" data-ticket-url="{{ url_for('chat_ticket') }}">
+  <header><b>🤖 Instamart Copilot Assistant</b><button type="button" class="x" id="chat-close" aria-label="Close help chat">×</button></header>
+  <div id="chat-log" class="chat-log" role="log" aria-live="polite"></div>
+  <div id="chat-actions" class="chat-actions"></div>
+  <form id="chat-form" class="chat-form"><input id="chat-input" maxlength="1000" autocomplete="off" placeholder="Ask about an order, refund, delivery…" aria-label="Your message"><button type="submit">Send</button></form>
+</section>
+<script src="{{ url_for('static', filename='chat.js') }}" defer></script>
+{% endif %}
+</body></html>

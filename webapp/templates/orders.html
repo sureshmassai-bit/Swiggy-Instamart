@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% from "_macros.html" import status_chip, csrf %}{% block title %}My orders{% endblock %}
+{% block body %}<h1>My orders</h1>
+<div class="card"><h2>Orders placed here</h2><div class="tw"><table><tr><th>Order</th><th>Product</th><th>Qty</th><th>Amount</th><th>Placed</th><th>Status</th><th></th></tr>
+{% for o in web %}<tr><td>{{ o.order_no|web_order }}</td><td>{{ o.product_name }}</td><td>{{ o.quantity }}</td><td>{{ o.amount|inr }}</td><td>{{ o.created_at }}</td><td>{{ status_chip(o.status) }}</td>
+<td>{% if o.status == 'placed' %}<form class="inline" method="post" action="{{ url_for('cancel_order', order_no=o.order_no) }}">{{ csrf() }}<button class="ghost" type="submit">Cancel</button></form>{% endif %}</td></tr>
+{% else %}<tr><td colspan="7" class="muted">You have not placed any orders here yet. <a href="{{ url_for('shop') }}">Order something</a>.</td></tr>{% endfor %}</table></div></div>
+<div class="card"><h2>Order history (latest 15)</h2><div class="tw"><table><tr><th>Order</th><th>Product</th><th>Qty</th><th>Amount</th><th>Date</th><th>Status</th></tr>
+{% for o in hist %}<tr><td>{{ o.order_id }}</td><td>{{ o.product_name }}</td><td>{{ o.quantity }}</td><td>{{ o.order_amount|inr }}</td><td>{{ o.order_ts }}</td><td>{{ status_chip(o.status) }}</td></tr>
+{% else %}<tr><td colspan="6" class="muted">No earlier orders.</td></tr>{% endfor %}</table></div></div>{% endblock %}

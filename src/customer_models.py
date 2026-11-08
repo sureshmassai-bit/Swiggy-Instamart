@@ -1,82 +1,297 @@
-"""Part B: RFM segmentation and a leakage-aware lapse model."""
+"""Part B: RFM segmentation (K-means + PCA) and a leakage-safe lapse model.
+
+Run from the repository root (needs Part A outputs first):
+    python -m src.customer_models
+"""
 from pathlib import Path
-import numpy as np, pandas as pd, joblib
+import json
+import tempfile
+
+import joblib
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.base import clone
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.metrics import f1_score, precision_score, recall_score, confusion_matrix, accuracy_score
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.decomposition import PCA
-ROOT=Path(__file__).resolve().parents[1]; CLEAN=ROOT/"data/clean"; OUT=ROOT/"outputs"
-SNAPSHOT=pd.Timestamp("2025-10-01")
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score, precision_score,
+                             recall_score, silhouette_score)
+from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.utils import resample
+
+ROOT = Path(__file__).resolve().parents[1]
+CLEAN = ROOT / "data" / "clean"
+OUT = ROOT / "outputs"
+
+SEED = 42
+RFM_SNAPSHOT = pd.Timestamp("2025-10-01 00:00:00")   # RFM snapshot date
+LAPSE_CUTOFF = pd.Timestamp("2025-09-01")             # features use orders strictly BEFORE this
+LAPSE_END = pd.Timestamp("2025-10-01")                # label window is [cutoff, end)
+MIN_LAPSED_F1 = 0.55
+
+NUMERIC = ["recency", "frequency", "monetary", "avg_discount", "cancellation_rate",
+           "avg_delivery", "age", "tenure_days"]
+CATEGORICAL = ["favourite_category", "city", "gender"]
+FEATURES = ["recency", "frequency", "monetary", "avg_discount", "cancellation_rate",
+            "avg_delivery", "favourite_category", "city", "age", "gender", "tenure_days"]
+
+SEGMENT_ACTIONS = {
+    "Premium": "VIP treatment: early access, premium support desk, protect with proactive retention offers.",
+    "Loyal Frequent": "Reward habit: loyalty points and bundles; nudge toward higher-value baskets.",
+    "At Risk / Dormant": "Win-back: time-limited discount or reminder before they churn completely.",
+    "Casual": "Grow engagement: category recommendations and first-repeat incentives.",
+}
+
+
 def load():
-    c=pd.read_csv(CLEAN/"customers.csv"); o=pd.read_csv(CLEAN/"orders.csv")
-    o["order_ts"]=pd.to_datetime(o.order_ts)
-    return c,o
-def rfm_and_segments(k=4):
-    c,o=load(); done=o[o.status.eq("completed")].copy()
-    rfm=done.groupby("customer_id").agg(last_order=("order_ts","max"),frequency=("order_id","nunique"),monetary=("order_amount","sum")).reset_index()
-    rfm["recency"]=(SNAPSHOT-rfm.last_order).dt.days; rfm=rfm.drop(columns="last_order")
-    scaler=StandardScaler(); X=scaler.fit_transform(rfm[["recency","frequency","monetary"]])
-    diagnostics=[]
-    from sklearn.metrics import silhouette_score
-    for n in range(2,9):
-        km=KMeans(n_clusters=n,n_init=10,random_state=42).fit(X)
-        diagnostics.append({"k":n,"inertia":km.inertia_,"silhouette":silhouette_score(X,km.labels_)})
-    km=KMeans(n_clusters=k,n_init=10,random_state=42); rfm["segment_id"]=km.fit_predict(X)
-    profile=rfm.groupby("segment_id").agg(size=("customer_id","size"),recency=("recency","mean"),frequency=("frequency","mean"),monetary=("monetary","mean")).reset_index()
-    order=profile.sort_values("monetary",ascending=False).segment_id.tolist()
-    names=["Premium" if i==order[0] else ("Frequent" if profile.set_index("segment_id").loc[i,"frequency"]>=profile.frequency.median() else "At Risk") for i in profile.segment_id]
-    name_map=dict(zip(profile.segment_id,names))
-    rfm["segment_name"]=rfm.segment_id.map(name_map); rfm["is_premium"]=rfm.segment_id.eq(order[0])
+    customers = pd.read_csv(CLEAN / "customers.csv")
+    orders = pd.read_csv(CLEAN / "orders.csv")
+    orders["order_ts"] = pd.to_datetime(orders.order_ts)
+    return customers, orders
+
+
+# ------------------------------------------------------------------ RFM + clustering
+def build_rfm(orders, snapshot=RFM_SNAPSHOT):
+    """RFM for customers with at least one completed order."""
+    done = orders[orders.status == "completed"]
+    rfm = done.groupby("customer_id").agg(last_order=("order_ts", "max"),
+                                          frequency=("order_id", "nunique"),
+                                          monetary=("order_amount", "sum")).reset_index()
+    rfm["recency"] = (snapshot - rfm.last_order).dt.days
+    return rfm.drop(columns="last_order")[["customer_id", "recency", "frequency", "monetary"]]
+
+
+def kmeans_diagnostics(X, k_range=range(2, 9)):
+    rows = []
+    for k in k_range:
+        km = KMeans(n_clusters=k, n_init=10, random_state=SEED).fit(X)
+        rows.append({"k": k, "inertia": km.inertia_, "silhouette": silhouette_score(X, km.labels_)})
+    return pd.DataFrame(rows)
+
+
+def choose_k(diagnostics, candidates=(3, 4, 5)):
+    """Best silhouette among the allowed candidates (business reading is documented in README)."""
+    sub = diagnostics[diagnostics.k.isin(candidates)]
+    return int(sub.loc[sub.silhouette.idxmax(), "k"])
+
+
+def name_segments(profile):
+    """Give each cluster a business name from its profile. Cluster ids are labels, not ranks."""
+    p = profile.set_index("segment_id")
+    names = {p.monetary.idxmax(): "Premium"}
+    rest = p.drop(index=list(names))
+    if len(rest):
+        loyal = rest.frequency.idxmax()
+        names[loyal] = "Loyal Frequent"
+        rest = rest.drop(index=loyal)
+    if len(rest):
+        risk = rest.recency.idxmax()
+        names[risk] = "At Risk / Dormant"
+        rest = rest.drop(index=risk)
+    for i, sid in enumerate(rest.sort_values("monetary", ascending=False).index, 1):
+        names[sid] = "Casual" if len(rest) == 1 else f"Casual {i}"
+    return names
+
+
+def rfm_and_segments(k=None, save=True):
+    """Returns (rfm_with_segments, diagnostics, profile, pca_explained_variance_ratio)."""
+    _, orders = load()
+    rfm = build_rfm(orders)
+    scaler = StandardScaler()
+    X = scaler.fit_transform(rfm[["recency", "frequency", "monetary"]])
+    diagnostics = kmeans_diagnostics(X)
+    k = k or choose_k(diagnostics)
+
+    km = KMeans(n_clusters=k, n_init=10, random_state=SEED)
+    rfm["segment_id"] = km.fit_predict(X)
+    profile = rfm.groupby("segment_id").agg(size=("customer_id", "size"), recency=("recency", "mean"),
+                                            frequency=("frequency", "mean"),
+                                            monetary=("monetary", "mean")).reset_index()
+    names = name_segments(profile)
+    profile["segment_name"] = profile.segment_id.map(names)
+    profile["action"] = profile.segment_name.map(lambda n: SEGMENT_ACTIONS.get(n, SEGMENT_ACTIONS["Casual"]))
+    rfm["segment_name"] = rfm.segment_id.map(names)
+    rfm["is_premium"] = rfm.segment_name.eq("Premium")     # exactly the highest-monetary cluster
+
+    pca = PCA(n_components=2, random_state=SEED).fit(X)
+    coords = pca.transform(X)
+    if save:
+        OUT.mkdir(exist_ok=True)
+        rfm[["customer_id", "recency", "frequency", "monetary", "segment_id",
+             "segment_name", "is_premium"]].to_csv(OUT / "customer_segments.csv", index=False)
+        diagnostics.assign(selected=diagnostics.k.eq(k)).to_csv(OUT / "kmeans_diagnostics.csv", index=False)
+        profile.to_csv(OUT / "segment_profile.csv", index=False)
+        rfm[["recency", "frequency", "monetary"]].describe().round(3).to_csv(OUT / "rfm_summary.csv")
+        _plot_pca(coords, rfm, pca.explained_variance_ratio_)
+    return rfm, diagnostics, profile, pca.explained_variance_ratio_
+
+
+def _plot_pca(coords, rfm, var):
+    fig, ax = plt.subplots(figsize=(7, 5))
+    for name, grp in rfm.groupby("segment_name"):
+        ax.scatter(coords[grp.index, 0], coords[grp.index, 1], s=10, alpha=.6, label=f"{name} (n={len(grp)})")
+    ax.set_xlabel(f"PC1 ({var[0]:.1%} of variance)")
+    ax.set_ylabel(f"PC2 ({var[1]:.1%} of variance)")
+    ax.set_title("RFM segments in PCA space (scaled R, F, M)")
+    ax.legend(markerscale=2, fontsize=8)
+    fig.tight_layout()
+    fig.savefig(OUT / "pca_segments.png", dpi=130)
+    plt.close(fig)
+
+
+# ------------------------------------------------------------------- lapse prediction
+def build_lapse_dataset(customers, orders, cutoff=LAPSE_CUTOFF, end=LAPSE_END):
+    """Cohort, features and label.
+
+    Cohort: customers with >= 1 completed order BEFORE the cutoff.
+    Label : lapsed = 1 if the customer has NO completed order in [cutoff, end).
+    Every feature is computed only from orders with order_ts < cutoff (no future information).
+    """
+    history = orders[orders.order_ts < cutoff]
+    done = history[history.status == "completed"]
+    cohort = done.groupby("customer_id").agg(last_order=("order_ts", "max"), frequency=("order_id", "nunique"),
+                                             monetary=("order_amount", "sum"), avg_discount=("discount_pct", "mean"),
+                                             avg_delivery=("delivery_minutes", "mean")).reset_index()
+    cohort["recency"] = (cutoff - cohort.last_order).dt.days
+    final = history[history.status.isin(["completed", "cancelled"])]
+    canc = final.groupby("customer_id").status.apply(lambda s: (s == "cancelled").mean()).rename("cancellation_rate")
+    cohort = cohort.merge(canc, on="customer_id", how="left")
+
+    products = pd.read_csv(CLEAN / "products.csv")[["product_id", "category"]]
+    fav = (done.merge(products, on="product_id").groupby(["customer_id", "category"]).size().rename("n").reset_index()
+           .sort_values(["customer_id", "n", "category"], ascending=[True, False, True])
+           .drop_duplicates("customer_id").rename(columns={"category": "favourite_category"}))
+    cohort = cohort.merge(fav[["customer_id", "favourite_category"]], on="customer_id", how="left")
+    cohort = cohort.merge(customers, on="customer_id", how="left")
+    cohort["tenure_days"] = (cutoff - pd.to_datetime(cohort.signup_date)).dt.days
+
+    window = orders[(orders.order_ts >= cutoff) & (orders.order_ts < end) & (orders.status == "completed")]
+    cohort["lapsed"] = (~cohort.customer_id.isin(window.customer_id)).astype(int)
+    cohort = cohort.set_index("customer_id", drop=False).rename_axis(None)
+    return cohort[FEATURES], cohort["lapsed"], cohort
+
+
+def make_pipeline(estimator):
+    """All preprocessing lives inside the Pipeline, so it is fitted on training folds only."""
+    prep = ColumnTransformer([
+        ("num", Pipeline([("impute", SimpleImputer(strategy="median")), ("scale", StandardScaler())]), NUMERIC),
+        ("cat", Pipeline([("impute", SimpleImputer(strategy="constant", fill_value="unknown")),
+                          ("onehot", OneHotEncoder(drop="first", handle_unknown="ignore"))]), CATEGORICAL)])
+    return Pipeline([("prep", prep), ("model", estimator)])
+
+
+def oversample_train(X_train, y_train, random_state=SEED):
+    """Keep every original training row, then duplicate minority rows (with replacement) up to parity."""
+    counts = y_train.value_counts()
+    minority = counts.idxmin()
+    n_extra = int(counts.max() - counts.min())
+    extra = resample(X_train[y_train == minority], replace=True, n_samples=n_extra, random_state=random_state)
+    X_os = pd.concat([X_train, extra])
+    y_os = pd.concat([y_train, pd.Series(minority, index=extra.index)])
+    return X_os, y_os
+
+
+def _metrics(y_true, pred):
+    return {"precision": precision_score(y_true, pred, zero_division=0),
+            "recall": recall_score(y_true, pred, zero_division=0),
+            "f1": f1_score(y_true, pred, zero_division=0),
+            "accuracy": accuracy_score(y_true, pred),
+            "confusion_matrix": confusion_matrix(y_true, pred, labels=[0, 1]).tolist()}  # rows=true, cols=pred
+
+
+def build_lapse_model(save=True):
+    customers, orders = load()
+    X, y, cohort = build_lapse_dataset(customers, orders)
+    assert not X.isna().any().any(), "feature columns must not contain missing values"
+    assert not any(c in X.columns for c in ("segment_id", "segment_name", "is_premium", "lapsed")), \
+        "segment labels / target must not be features"
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=SEED)
+
+    specs = {
+        "logistic": (LogisticRegression(max_iter=1000), {"model__C": [.01, .1, 1, 10, 100]}),
+        "forest": (RandomForestClassifier(n_estimators=100, random_state=SEED),
+                   {"model__max_depth": [3, 5, 8], "model__min_samples_leaf": [5, 10, 20]}),
+    }
+    models, searches = {}, {}
+    for name, (est, grid) in specs.items():
+        search = GridSearchCV(make_pipeline(est), grid, cv=5, scoring="f1", n_jobs=-1)
+        search.fit(X_train, y_train)
+        searches[name] = search
+        models[name] = {"best_params": search.best_params_, "cv_f1": float(search.best_score_),
+                        **_metrics(y_test, search.predict(X_test))}
+
+    baselines = {"majority_class (predict never lapsed)": _metrics(y_test, np.zeros(len(y_test), dtype=int)),
+                 "always_lapsed": _metrics(y_test, np.ones(len(y_test), dtype=int))}
+
+    # Model selection uses CROSS-VALIDATION on the training set only; the test set is never used to choose.
+    selected_name = max(models, key=lambda m: models[m]["cv_f1"])
+    selected = searches[selected_name].best_estimator_
+    sel_f1 = models[selected_name]["f1"]
+    assert sel_f1 >= MIN_LAPSED_F1, f"selected model lapsed-class test F1 {sel_f1:.3f} < {MIN_LAPSED_F1}"
+
+    # Class-balance experiment: oversample the TRAINING set only; evaluate on the unchanged test set.
+    X_os, y_os = oversample_train(X_train, y_train)
+    oversampling = {"train_rows_before": len(X_train), "train_rows_after": len(X_os),
+                    "train_lapsed_before": int(y_train.sum()), "train_lapsed_after": int(y_os.sum())}
+    for name, search in searches.items():
+        refit = clone(search.best_estimator_).fit(X_os, y_os)   # same tuned params, no CV on duplicated rows
+        oversampling[name] = _metrics(y_test, refit.predict(X_test))
+
+    # Persistence round-trip
     OUT.mkdir(exist_ok=True)
-    rfm[["customer_id","recency","frequency","monetary","segment_id","segment_name","is_premium"]].to_csv(OUT/"customer_segments.csv",index=False)
-    pca=PCA(n_components=2).fit(X)
-    return rfm,pd.DataFrame(diagnostics),profile,pca.explained_variance_ratio_
-def build_lapse_model():
-    c,o=load(); cutoff=pd.Timestamp("2025-09-01"); end=pd.Timestamp("2025-10-01")
-    hist=o[(o.order_ts<cutoff)].copy(); done=hist[hist.status.eq("completed")]
-    cohort=done.groupby("customer_id").agg(last_order=("order_ts","max"),frequency=("order_id","nunique"),monetary=("order_amount","sum"),
-      avg_discount=("discount_pct","mean"),avg_delivery=("delivery_minutes","mean")).reset_index()
-    cohort["recency"]=(cutoff-cohort.last_order).dt.days; cohort=cohort.drop(columns="last_order")
-    all_final=hist[hist.status.isin(["completed","cancelled"])].groupby("customer_id").status.agg(total="count",cancelled=lambda x:(x=="cancelled").sum()).reset_index()
-    cohort=cohort.merge(all_final,on="customer_id",how="left"); cohort["cancellation_rate"]=cohort.cancelled/cohort.total
-    cats=done.merge(pd.read_csv(CLEAN/"products.csv")[["product_id","category"]],on="product_id").groupby(["customer_id","category"]).size().rename("n").reset_index()
-    fav=cats.sort_values(["customer_id","n","category"],ascending=[True,False,True]).drop_duplicates("customer_id").rename(columns={"category":"favourite_category"})[["customer_id","favourite_category"]]
-    cohort=cohort.merge(fav,on="customer_id",how="left").merge(c,on="customer_id",how="left")
-    cohort["signup_date"]=pd.to_datetime(cohort.signup_date); cohort["tenure_days"]=(cutoff-cohort.signup_date).dt.days
-    post=o[(o.order_ts>=cutoff)&(o.order_ts<end)&o.status.eq("completed")].groupby("customer_id").size()
-    cohort["lapsed"]=(~cohort.customer_id.isin(post.index)).astype(int)
-    cohort=cohort.drop(columns=["signup_date","total","cancelled"])
-    features=["recency","frequency","monetary","avg_discount","cancellation_rate","avg_delivery","favourite_category","city","age","gender","tenure_days"]
-    X=cohort[features].copy(); y=cohort.lapsed
-    numeric=["recency","frequency","monetary","avg_discount","cancellation_rate","avg_delivery","age","tenure_days"]
-    categorical=["favourite_category","city","gender"]
-    X[numeric]=X[numeric].fillna(X[numeric].median()); X[categorical]=X[categorical].fillna("unknown")
-    X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=.2,stratify=y,random_state=42)
-    prep=ColumnTransformer([("num",StandardScaler(),numeric),("cat",OneHotEncoder(drop="first",handle_unknown="ignore"),categorical)])
-    models={}
-    for name,est,grid in [
-      ("logistic",LogisticRegression(max_iter=1000),{"model__C":[.01,.1,1,10,100]}),
-      ("forest",RandomForestClassifier(n_estimators=100,random_state=42),{"model__max_depth":[3,5,8],"model__min_samples_leaf":[5,10,20]})]:
-        pipe=Pipeline([("prep",prep),("model",est)])
-        search=GridSearchCV(pipe,grid,cv=5,scoring="f1",n_jobs=-1); search.fit(X_train,y_train)
-        pred=search.predict(X_test)
-        models[name]={"best_params":search.best_params_,"cv_f1":search.best_score_,"precision":precision_score(y_test,pred,zero_division=0),
-          "recall":recall_score(y_test,pred,zero_division=0),"f1":f1_score(y_test,pred,zero_division=0),"confusion_matrix":confusion_matrix(y_test,pred).tolist(),"search":search}
-    selected=models["forest"]["search"]
-    OUT.mkdir(exist_ok=True); joblib.dump(selected,OUT/"lapse_model.joblib")
-    assert np.array_equal(selected.predict(X_test),joblib.load(OUT/"lapse_model.joblib").predict(X_test))
-    # Premium list is illustrative: the flag uses whole-window RFM and is post-hoc.
-    segments,_,_,_=rfm_and_segments()
-    premium=set(segments.loc[segments.is_premium,"customer_id"])
-    probs=selected.predict_proba(X_test)[:,list(selected.classes_).index(1)]
-    ret=pd.DataFrame({"customer_id":X_test.index if X_test.index.name=="customer_id" else cohort.loc[X_test.index,"customer_id"].values,
-      "lapse_probability":probs,"actually_lapsed":y_test.values})
-    ret=ret[ret.customer_id.isin(premium)].sort_values("lapse_probability",ascending=False).head(10)
-    ret.to_csv(OUT/"retention_list.csv",index=False)
-    return {"cohort_rows":len(cohort),"lapsed":int(y.sum()),"baseline_accuracy":accuracy_score(y_test,np.zeros(len(y_test),dtype=int)),
-      "models":{k:{a:b for a,b in v.items() if a!="search"} for k,v in models.items()},"retention_list":ret}
+    model_path = OUT / "lapse_model.joblib" if save else Path(tempfile.mkdtemp()) / "lapse_model.joblib"
+    joblib.dump(selected, model_path)
+    reloaded = joblib.load(model_path)
+    identical = bool(np.array_equal(selected.predict(X_test), reloaded.predict(X_test)))
+    assert identical, "reloaded model predictions differ"
+
+    # Illustrative retention list. Premium is a whole-window (Apr-Sep) RFM label, i.e. post-hoc.
+    segments, _, _, _ = rfm_and_segments(save=save)
+    premium = set(segments.loc[segments.is_premium, "customer_id"])
+    prob = selected.predict_proba(X_test)[:, list(selected.classes_).index(1)]
+    ret = pd.DataFrame({"customer_id": X_test.index, "lapse_probability": prob, "actually_lapsed": y_test.values})
+    ret = ret[ret.customer_id.isin(premium)].sort_values("lapse_probability", ascending=False).head(10)
+    if save:
+        ret.to_csv(OUT / "retention_list.csv", index=False)
+
+    summary = {"cohort_rows": len(cohort), "lapsed": int(y.sum()), "lapse_rate": float(y.mean()),
+               "train_rows": len(X_train), "test_rows": len(X_test),
+               "latest_feature_order_ts": str(orders[orders.order_ts < LAPSE_CUTOFF].order_ts.max()),
+               "models": models, "baselines": baselines, "selected_model": selected_name,
+               "selection_rule": "highest 5-fold CV F1 on the training set", "oversampling": oversampling,
+               "reload_predictions_identical": identical, "retention_list_rows": len(ret)}
+    if save:
+        (OUT / "lapse_metrics.json").write_text(json.dumps(summary, indent=2, default=float), encoding="utf-8")
+    summary["retention_list"] = ret
+    return summary
+
+
+def main():
+    rfm, diagnostics, profile, var = rfm_and_segments()
+    print("RFM summary:\n", rfm[["recency", "frequency", "monetary"]].describe().round(2).to_string())
+    print("\nK-means diagnostics (StandardScaler, n_init=10, random_state=42):\n", diagnostics.round(4).to_string(index=False))
+    print("\nSelected K:", profile.shape[0])
+    print(profile.round(2).drop(columns="action").to_string(index=False))
+    print("\nPCA explained variance:", np.round(var, 4), "total", round(float(var.sum()), 4))
+    s = build_lapse_model()
+    print(f"\nLapse cohort={s['cohort_rows']} lapsed={s['lapsed']} ({s['lapse_rate']:.1%}) "
+          f"train={s['train_rows']} test={s['test_rows']}")
+    for k, v in {**s["models"], **s["baselines"]}.items():
+        print(f"{k:>38}: P={v['precision']:.3f} R={v['recall']:.3f} F1={v['f1']:.3f} CM={v['confusion_matrix']}")
+    print("Selected:", s["selected_model"], "|", s["selection_rule"])
+    print("Oversampling:", json.dumps(s["oversampling"], default=float))
+    print("Reload predictions identical:", s["reload_predictions_identical"])
+    print(s["retention_list"].to_string(index=False))
+
+
+if __name__ == "__main__":
+    main()

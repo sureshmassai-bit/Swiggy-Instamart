@@ -3,5 +3,17 @@ venv/
 __pycache__/
 *.py[cod]
 .env
+.pytest_cache/
+.ipynb_checkpoints/
 data/instamart.db
-state/*.json
+state/
+outputs/agent_demo/
+
+# web app: secrets and the live database never go to git (the SQL dump and Excel record do)
+credentials/
+data/app.db
+data/app.db-journal
+data/.secret_key
+data/records/*.tmp
+data/dump/*.tmp
+ngrok.exe

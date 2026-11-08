@@ -1,0 +1,54 @@
+{
+  "chunks": {
+    "delivery_policy.txt": 3,
+    "escalation_policy.txt": 3,
+    "payment_policy.txt": 3,
+    "privacy_policy.txt": 2,
+    "refund_policy.txt": 4
+  },
+  "evaluation": {
+    "questions_supported": 12,
+    "expected_doc_in_top3": 12,
+    "expected_doc_top1": 12,
+    "expected_fact_found": 12,
+    "unsupported_questions": 2,
+    "fallback_triggered": 2,
+    "false_fallbacks_on_supported": 0
+  },
+  "overlap_comparison": {
+    "overlap_10": {
+      "chunks": 15,
+      "per_doc": {
+        "delivery_policy.txt": 3,
+        "escalation_policy.txt": 3,
+        "payment_policy.txt": 3,
+        "privacy_policy.txt": 2,
+        "refund_policy.txt": 4
+      },
+      "questions_supported": 12,
+      "expected_doc_in_top3": 12,
+      "expected_doc_top1": 12,
+      "expected_fact_found": 12,
+      "unsupported_questions": 2,
+      "fallback_triggered": 2,
+      "false_fallbacks_on_supported": 0
+    },
+    "overlap_0": {
+      "chunks": 13,
+      "per_doc": {
+        "delivery_policy.txt": 3,
+        "escalation_policy.txt": 2,
+        "payment_policy.txt": 3,
+        "privacy_policy.txt": 2,
+        "refund_policy.txt": 3
+      },
+      "questions_supported": 12,
+      "expected_doc_in_top3": 12,
+      "expected_doc_top1": 12,
+      "expected_fact_found": 10,
+      "unsupported_questions": 2,
+      "fallback_triggered": 2,
+      "false_fallbacks_on_supported": 0
+    }
+  }
+}

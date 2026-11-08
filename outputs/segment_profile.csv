@@ -1,0 +1,5 @@
+segment_id,size,recency,frequency,monetary,segment_name,action
+0,436,28.862385321100916,3.772935779816514,1057.618233944954,Casual,Grow engagement: category recommendations and first-repeat incentives.
+1,138,24.115942028985508,6.768115942028985,7129.695652173913,Premium,"VIP treatment: early access, premium support desk, protect with proactive retention offers."
+2,419,8.766109785202865,19.403341288782816,3410.020525059666,Loyal Frequent,Reward habit: loyalty points and bundles; nudge toward higher-value baskets.
+3,182,109.04395604395604,2.2032967032967035,685.9925824175824,At Risk / Dormant,Win-back: time-limited discount or reminder before they churn completely.

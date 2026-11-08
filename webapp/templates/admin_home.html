@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% block title %}Admin dashboard{% endblock %}
+{% block body %}<h1>Admin dashboard</h1>
+<div class="grid g4">
+ <div class="card stat"><b>{{ stats.customers }}</b><span>customers ({{ stats.web_customers }} registered here)</span></div>
+ <div class="card stat"><b>{{ stats.users }}</b><span>customer logins</span></div>
+ <div class="card stat"><b>{{ stats.open_tickets }}</b><span>need a person ({{ stats.high_open }} high priority)</span></div>
+ <div class="card stat"><b>{{ stats.chats_solved }}</b><span>chats solved by the assistant ({{ stats.chats_ticketed }} became tickets)</span></div>
+ <div class="card stat"><b>{{ stats.web_orders }}</b><span>orders placed here · {{ stats.web_revenue|inr }}</span></div>
+</div>
+<div class="card"><h2>Escalated – waiting for a person</h2><div class="tw"><table><tr><th>Ticket</th><th>Customer</th><th>Subject</th><th>Category</th><th>Priority</th></tr>
+{% for t in queue %}<tr><td><a href="{{ url_for('ticket_detail', ticket_no=t.ticket_no) }}">{{ t.ticket_no|tkt }}</a></td><td>{{ t.customer_id }} <span class="muted small">({{ t.username }})</span></td><td>{{ t.subject }}</td><td>{{ t.category or '—' }}</td><td>{% if t.priority == 'HIGH' %}<span class="chip hi">HIGH</span>{% else %}Normal{% endif %}</td></tr>
+{% else %}<tr><td colspan="5" class="muted">Nothing waiting. 🎉</td></tr>{% endfor %}</table></div>
+<p><a href="{{ url_for('admin_tickets') }}">All tickets &rarr;</a> · <a href="{{ url_for('admin_export') }}">Download Excel records</a></p></div>
+<p class="small muted">{{ stats.history_orders }} historical orders (Part A database) are read-only and visible per customer.</p>{% endblock %}

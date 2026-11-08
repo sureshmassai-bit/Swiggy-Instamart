@@ -1,20 +1,37 @@
-"""Run all project stages in sequence. Use this after installing requirements."""
-from src.data_pipeline import audit,clean_data,validate
-from src.customer_models import rfm_and_segments,build_lapse_model
-from src.triage import run_pipeline,FEW
-from src.policy_rag import PolicyRAG,evaluate
+"""Run every stage in dependency order from the repository root:  python run_project.py
+
+generate_data.py is executed unchanged as a subprocess; nothing here needs a network or an API key.
+"""
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+
+
 def main():
+    print("=== RAW DATA: generate_data.py ===")
+    subprocess.run([sys.executable, "generate_data.py"], cwd=ROOT, check=True)
+
+    from src import data_pipeline, sql_analysis, customer_models, triage, policy_rag, run_scenarios
+
     print("\n=== PART A: AUDIT / CLEAN / VALIDATE ===")
-    audit(); clean_data(); validate()
-    print("\n=== PART B: SEGMENTS ===")
-    rfm,diagnostics,profile,pca=rfm_and_segments()
-    print("K-means diagnostics:\n",diagnostics.to_string(index=False))
-    print("Segment profile:\n",profile.to_string(index=False)); print("PCA explained variance:",pca)
-    print("Lapse model summary:",build_lapse_model())
+    data_pipeline.audit()
+    data_pipeline.clean_data()
+    ok = data_pipeline.validate()
+    print("\n=== PART A: SQL + PANDAS ANALYSIS ===")
+    ok &= bool(sql_analysis.main())
+    print("\n=== PART B: SEGMENTS + LAPSE MODEL ===")
+    customer_models.main()
     print("\n=== PART C: TRIAGE ===")
-    triage,summary=run_pipeline(prompt=FEW,token_budget=100000)
-    print(summary); print(triage.head().to_string(index=False))
+    triage.main()
     print("\n=== PART D: POLICY RAG ===")
-    rag=PolicyRAG(); print("chunks:",len(rag.chunks)); print(evaluate(rag).to_string(index=False))
-    print("\nProject pipeline finished. Review outputs/ and data/instamart.db.")
-if __name__=="__main__": main()
+    policy_rag.main()
+    print("\n=== PART D: REFUND AGENT SCENARIOS ===")
+    ok &= bool(run_scenarios.main())
+    print("\nAll stages finished." if ok else "\nFinished WITH FAILURES; see output above.")
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

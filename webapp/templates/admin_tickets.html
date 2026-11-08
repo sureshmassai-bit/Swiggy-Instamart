@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% from "_macros.html" import status_chip, pager %}{% block title %}Tickets{% endblock %}
+{% block body %}<h1>Support tickets</h1><p class="muted small">Every ticket here was raised from the help chat after the assistant could not resolve the problem; “open” ones are waiting for a person.</p>
+<p><a class="chip {{ 'hi' if status not in TICKET_STATUSES }}" href="{{ url_for('admin_tickets', status='all') }}">All</a> {% for s in TICKET_STATUSES %}<a class="chip {{ 'hi' if s==status }}" href="{{ url_for('admin_tickets', status=s) }}">{{ s }}</a> {% endfor %}</p>
+<div class="card tw"><table><tr><th>Ticket</th><th>Customer</th><th>Subject</th><th>Category</th><th>Route</th><th>Status</th><th>Updated</th></tr>
+{% for t in rows %}<tr><td><a href="{{ url_for('ticket_detail', ticket_no=t.ticket_no) }}">{{ t.ticket_no|tkt }}</a></td><td><a href="{{ url_for('admin_customer', customer_id=t.customer_id) }}">{{ t.customer_id }}</a> <span class="muted small">({{ t.username }})</span></td>
+<td>{{ t.subject }}</td><td>{{ t.category or '—' }}</td><td>{{ t.route|pretty }}{% if t.priority == 'HIGH' %} <span class="chip hi">HIGH</span>{% endif %}</td><td>{{ status_chip(t.status) }}</td><td class="small">{{ t.updated_at }}</td></tr>
+{% else %}<tr><td colspan="7" class="muted">No tickets.</td></tr>{% endfor %}</table>{{ pager(page, pages, total, 'admin_tickets', status=status) }}</div>{% endblock %}

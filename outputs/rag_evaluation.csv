@@ -1,0 +1,21 @@
+question,expected_doc,retrieved_doc,top1_doc,fact_found,fallback,answer
+What delivery time makes a completed order eligible for a full refund?,refund_policy.txt,True,True,True,False,"order is delivered in more than 45 minutes, the customer receives a full refund of the order amount."
+Who must approve a refund above INR 1000?,refund_policy.txt,True,True,True,False,A refund above INR 1000 must be approved by a human support lead before money is returned.
+How many days do I have to raise a refund request?,refund_policy.txt,True,True,True,False,A refund request must be raised within 7 days of the delivery date.
+What is the delivery fee on small orders?,delivery_policy.txt,True,True,True,False,"A delivery fee of INR 25 is charged on orders below INR 199,
+ 
+of INR 25 is charged on orders below INR 199, and delivery is free on orders of INR 199 or more."
+On orders of what value is delivery free?,delivery_policy.txt,True,True,True,False,"of INR 25 is charged on orders below INR 199, and delivery is free on orders of INR 199 or more."
+Why does the electronics delivery need a one time password?,delivery_policy.txt,True,True,True,False,Electronics items are delivered only after the customer shares a one time password with the rider.
+Is cash on delivery available for a large order?,payment_policy.txt,True,True,True,False,Cash on delivery is available only for orders up to INR 2500.
+How soon is money returned when a payment fails but is deducted?,payment_policy.txt,True,True,True,False,"If a payment fails but money is deducted, the amount is returned automatically
+ 
+fails but money is deducted, the amount is returned automatically within 48 hours."
+Can wallet balance be refunded as cash?,payment_policy.txt,True,True,True,False,Wallet balance can be used for any order and is never refunded as cash.
+When are delivery addresses deleted from active systems?,privacy_policy.txt,True,True,True,False,"Delivery addresses are deleted from active systems 180 days after
+ 
+Delivery addresses are deleted from active systems 180 days after the last order."
+How fast must a fraud ticket reach the security team?,escalation_policy.txt,True,True,True,False,A ticket about fraud or an unauthorized transaction is marked high priority and sent to the security team within 2 hours.
+After how many steps must an automated assistant hand over to a human?,escalation_policy.txt,True,True,True,False,"If an automated assistant cannot resolve a ticket within 6 steps, it must hand the case to a human agent with a short summary."
+What is the favourite colour of the company mascot?,NONE,False,False,False,True,I could not find that information in the policy documents.
+Who won the cricket world cup final?,NONE,False,False,False,True,I could not find that information in the policy documents.

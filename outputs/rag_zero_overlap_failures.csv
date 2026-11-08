@@ -1,0 +1,5 @@
+question,expected_doc,retrieved_doc,fact_found,answer
+What delivery time makes a completed order eligible for a full refund?,refund_policy.txt,True,False,receives a full refund of the order amount.
+How soon is money returned when a payment fails but is deducted?,payment_policy.txt,True,False,"If a payment fails but money is deducted, the amount is returned automatically
+ 
+1000 must be approved by a human support lead before money is returned."

@@ -1,0 +1,8 @@
+scenario,description,expected_status,status,expected_refund_inr,refund_inr,llm_calls,tokens_used,tools,match
+S1,"late order INR 128.25, auto refund",REFUND,REFUND,128.25,128.25,5,900,get_order > search_policy > calculate_refund > issue_refund,True
+S2,"late order INR 135.00, auto refund",REFUND,REFUND,135.0,135.0,5,900,get_order > search_policy > calculate_refund > issue_refund,True
+S3,"late order INR 1999.00, above limit -> human",ESCALATE,ESCALATE,1999.0,1999.0,5,907,get_order > search_policy > calculate_refund > escalate_to_human,True
+S4,cancelled order -> denied,DENIED,DENIED,,,3,352,get_order > search_policy,True
+S5,"completed, delivered on time -> denied",DENIED,DENIED,0.0,0.0,4,617,get_order > search_policy > calculate_refund,True
+S6,order id does not exist,NOT_FOUND,NOT_FOUND,,,2,90,get_order,True
+S7,agent loops -> max iterations,FALLBACK_MAX_ITERATIONS,FALLBACK_MAX_ITERATIONS,,,6,3066,search_policy > search_policy > search_policy > search_policy > search_policy > search_policy,True

@@ -1,0 +1,2 @@
+{% extends "base.html" %}{% block title %}{{ title }}{% endblock %}
+{% block body %}<div class="err-page"><b>{{ code }}</b><h1>{{ title }}</h1><p class="muted">{{ detail }}</p><a class="btn" href="{{ url_for('index') }}">Go to my home</a></div>{% endblock %}

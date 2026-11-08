@@ -1,0 +1,9 @@
+{% macro pager(page, pages, total, endpoint) %}
+<div class="pager small muted">
+  <span>{{ total }} result{{ '' if total == 1 else 's' }} · page {{ page }} of {{ pages }}</span><span class="sp"></span>
+  {% if page > 1 %}<a href="{{ url_for(endpoint, page=page-1, **kwargs) }}">&larr; Previous</a>{% endif %}
+  {% if page < pages %}<a href="{{ url_for(endpoint, page=page+1, **kwargs) }}">Next &rarr;</a>{% endif %}
+</div>
+{% endmacro %}
+{% macro status_chip(s) %}<span class="chip {{ 'ok' if s in ('delivered','completed','answered','closed') else 'err' if s == 'cancelled' else 'warn' }}">{{ s|pretty }}</span>{% endmacro %}
+{% macro csrf() %}<input type="hidden" name="csrf" value="{{ csrf_token() }}">{% endmacro %}

@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block title %}Order products{% endblock %}
+{% block body %}<h1>Order products</h1>
+<p>{% for c in cats %}<a class="chip {{ 'hi' if c==current }}" href="{{ url_for('shop', category=c) }}">{{ c }}</a> {% endfor %}{% if current %}<a class="chip" href="{{ url_for('shop') }}">All</a>{% endif %}</p>
+<div class="grid g3">{% for p in items %}
+ <div class="card prod"><span class="chip">{{ p.category }}</span><h3>{{ p.product_name }}</h3><span class="price">{{ p.price_inr|inr }}</span>
+ <form method="post" action="{{ url_for('place_order') }}" class="row"><input type="hidden" name="csrf" value="{{ csrf_token() }}"><input type="hidden" name="product_id" value="{{ p.product_id }}">
+ <div><label for="q{{ p.product_id }}">Quantity</label><input id="q{{ p.product_id }}" name="quantity" type="number" min="1" max="20" value="1" required></div>
+ <div class="fit"><button type="submit">Place order</button></div></form></div>{% endfor %}</div>{% endblock %}
