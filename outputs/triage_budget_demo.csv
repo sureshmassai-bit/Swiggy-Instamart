@@ -1,0 +1,165 @@
+ticket_id,customer_id,status,category,segment_name,is_premium,priority,route,human_handoff,handoff_reason,attempts,tokens_used,pii_email,pii_phone,pii_order_id,prompt_variant
+T0024,C0486,classified_json,fraud,At Risk / Dormant,False,HIGH,security_team,False,,1,84,0,1,1,few_shot
+T0073,C0080,classified_json,billing,Loyal Frequent,False,NORMAL,support_queue,False,,1,80,0,1,1,few_shot
+T0095,C1087,classified_json,technical,Casual,False,NORMAL,support_queue,False,,1,82,0,0,1,few_shot
+T0159,C1172,skipped_empty,,Loyal Frequent,False,NORMAL,human_review,True,empty ticket: nothing to classify,0,0,0,0,0,few_shot
+T0080,C0910,classified_json,fraud,Casual,False,HIGH,security_team,False,,1,84,0,1,1,few_shot
+T0124,C0139,classified_json,fraud,Loyal Frequent,False,HIGH,security_team,False,,1,84,0,1,1,few_shot
+T0061,C0812,classified_json,billing,Loyal Frequent,False,NORMAL,support_queue,False,,1,76,1,0,1,few_shot
+T0118,C0355,classified_json,delivery,Loyal Frequent,False,NORMAL,support_queue,False,,1,79,1,0,1,few_shot
+T0037,C1156,classified_json,billing,Premium,True,HIGH,premium_desk,False,,1,80,1,0,1,few_shot
+T0002,C0881,classified_json,delivery,Casual,False,NORMAL,support_queue,False,,2,78,0,1,1,few_shot
+T0163,C0322,flagged_long,,Loyal Frequent,False,NORMAL,human_review,True,ticket exceeds input token limit; not sent to model,0,0,0,0,0,few_shot
+T0031,C0958,classified_json,technical,At Risk / Dormant,False,NORMAL,support_queue,False,,1,82,0,0,1,few_shot
+T0047,C0756,classified_json,technical,Loyal Frequent,False,NORMAL,support_queue,False,,1,71,0,1,0,few_shot
+T0063,C0892,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,0,few_shot
+T0121,C0852,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0139,C0829,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0115,C1025,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,0,few_shot
+T0123,C0674,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,0,few_shot
+T0116,C0294,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0136,C0891,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,0,few_shot
+T0008,C1177,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0102,C0985,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0072,C0218,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0101,C1151,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0059,C0764,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,0,few_shot
+T0049,C0078,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0153,C0150,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0050,C0117,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0147,C0125,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,0,1,few_shot
+T0074,C1119,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0156,C0328,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0145,C0751,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0053,C0447,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0134,C0608,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0039,C0298,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0016,C0962,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0055,C1063,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0130,C0692,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0099,C1000,budget_exhausted,,Premium,True,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0062,C0403,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0013,C0507,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0137,C0978,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0152,C0530,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0144,C0521,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0094,C0863,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0021,C0909,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0077,C0082,budget_exhausted,,Premium,True,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0036,C0173,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0113,C0077,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0060,C0784,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0043,C0942,budget_exhausted,,Premium,True,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,0,few_shot
+T0048,C0733,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,0,few_shot
+T0154,C1071,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0125,C1156,budget_exhausted,,Premium,True,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0146,C1024,budget_exhausted,,Premium,True,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0107,C0783,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,0,few_shot
+T0011,C0233,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0017,C0028,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0111,C1033,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,0,few_shot
+T0041,C0464,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0120,C0208,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0122,C0404,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0001,C0851,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0064,C0848,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0092,C0585,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,0,few_shot
+T0038,C0882,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0155,C0285,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0104,C0815,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,0,few_shot
+T0012,C0335,budget_exhausted,,Premium,True,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0084,C0569,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0051,C1049,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,0,few_shot
+T0143,C0339,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0035,C1175,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,0,1,few_shot
+T0028,C1036,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0100,C0754,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0022,C1160,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0082,C0168,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0127,C0976,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,0,1,few_shot
+T0162,C0665,flagged_long,,Premium,True,NORMAL,human_review,True,ticket exceeds input token limit; not sent to model,0,0,0,0,0,few_shot
+T0109,C1080,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0046,C0442,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0081,C0559,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0007,C0682,budget_exhausted,,Premium,True,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,0,few_shot
+T0068,C0208,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0085,C0031,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0075,C0901,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0052,C1005,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0066,C1199,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0151,C1011,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,0,few_shot
+T0131,C0069,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,0,few_shot
+T0006,C0177,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0135,C0303,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,0,1,few_shot
+T0079,C1128,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,0,few_shot
+T0040,C0256,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0093,C0131,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0089,C0860,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0034,C1188,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0033,C0714,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0160,C0670,skipped_empty,,Premium,True,NORMAL,human_review,True,empty ticket: nothing to classify,0,0,0,0,0,few_shot
+T0087,C0797,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0009,C0758,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0108,C0340,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0054,C0571,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0025,C0610,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0004,C0721,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0148,C1057,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0088,C0852,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,0,few_shot
+T0030,C0015,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0067,C0704,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,0,few_shot
+T0029,C0885,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0129,C0237,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0105,C0063,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0045,C0628,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0069,C0491,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0010,C1190,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0023,C0400,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,0,few_shot
+T0106,C0197,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0015,C0488,budget_exhausted,,Premium,True,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,0,1,few_shot
+T0091,C0796,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0126,C0996,budget_exhausted,,Premium,True,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0096,C0324,budget_exhausted,,Premium,True,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0149,C0770,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0070,C1150,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0026,C0677,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0097,C0932,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0132,C0282,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0027,C0232,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,0,1,few_shot
+T0119,C0629,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,0,1,few_shot
+T0157,C1107,skipped_empty,,Loyal Frequent,False,NORMAL,human_review,True,empty ticket: nothing to classify,0,0,0,0,0,few_shot
+T0058,C0287,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0110,C0056,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0018,C1135,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0032,C1139,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0003,C0591,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,0,few_shot
+T0042,C0508,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0056,C0140,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0114,C0619,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0083,C0356,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,0,few_shot
+T0138,C0720,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0057,C1199,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0076,C0418,budget_exhausted,,At Risk / Dormant,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0019,C0579,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0103,C0499,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,0,1,few_shot
+T0164,C0794,flagged_long,,Casual,False,NORMAL,human_review,True,ticket exceeds input token limit; not sent to model,0,0,0,0,0,few_shot
+T0090,C0322,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0112,C0432,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0133,C0717,budget_exhausted,,Premium,True,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0014,C0579,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0158,C1106,skipped_empty,,At Risk / Dormant,False,NORMAL,human_review,True,empty ticket: nothing to classify,0,0,0,0,0,few_shot
+T0020,C0460,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0142,C0605,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0086,C1132,budget_exhausted,,Premium,True,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0141,C0376,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0044,C0862,budget_exhausted,,Premium,True,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,0,few_shot
+T0117,C0465,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0078,C0586,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0140,C1173,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0071,C0966,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0161,C0202,flagged_long,,Loyal Frequent,False,NORMAL,human_review,True,ticket exceeds input token limit; not sent to model,0,0,0,0,0,few_shot
+T0150,C0622,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0065,C0205,budget_exhausted,,Loyal Frequent,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot
+T0128,C0467,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,0,few_shot
+T0005,C0404,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,1,0,1,few_shot
+T0098,C0343,budget_exhausted,,Casual,False,NORMAL,human_review,True,token/cost budget exhausted,0,0,0,1,1,few_shot

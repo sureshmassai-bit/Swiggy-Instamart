@@ -63,3 +63,16 @@ h1{background:linear-gradient(90deg,#e8590c,#7c3aed);-webkit-background-clip:tex
 .chat-actions{display:flex;flex-wrap:wrap;gap:8px;padding:0 12px}.chat-actions:not(:empty){padding:8px 12px}
 .chat-actions button,.chat-actions a{font-size:13px;padding:7px 11px}
 .chat-form{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}.chat-form input{flex:1}
+/* analytics pages (admin) */
+.subnav{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 16px}.subnav .chip{padding:5px 12px;font-size:13px}
+.chart{margin:0}.chart figcaption{margin-bottom:6px}
+.hbar{width:100%;height:auto;display:block}.hbar .mark{fill:var(--accent)}.hbar .hit{fill:transparent}
+.hbar .lbl{fill:var(--ink);font-size:12px}.hbar .val{fill:var(--muted);font-size:12px}
+.hbar g.bar:hover .mark{fill:var(--accent2)}.hbar g.bar:hover .hit{fill:var(--chip)}
+pre.code,pre.notes{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13px}
+pre.notes{font-family:inherit}
+details.card>summary{cursor:pointer;list-style-position:inside}details.card[open]>summary{margin-bottom:10px}
+img.plot{max-width:100%;height:auto;border-radius:8px;background:#fff}
+.answer{font-size:17px;font-weight:600}
+.inline-check{display:flex;align-items:center;gap:8px;font-weight:500}.inline-check input{width:auto}
+code{font-size:12.5px;background:var(--chip);padding:1px 5px;border-radius:5px}

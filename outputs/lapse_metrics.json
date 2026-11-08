@@ -123,5 +123,73 @@
     }
   },
   "reload_predictions_identical": true,
-  "retention_list_rows": 10
+  "retention_list_rows": 10,
+  "feature_importance": [
+    {
+      "feature": "monetary",
+      "permutation_importance_mean": 0.1631,
+      "permutation_importance_std": 0.0391,
+      "model_importance_share": 0.2804
+    },
+    {
+      "feature": "frequency",
+      "permutation_importance_mean": 0.1407,
+      "permutation_importance_std": 0.0494,
+      "model_importance_share": 0.2779
+    },
+    {
+      "feature": "favourite_category",
+      "permutation_importance_mean": 0.0165,
+      "permutation_importance_std": 0.0113,
+      "model_importance_share": 0.0601
+    },
+    {
+      "feature": "avg_delivery",
+      "permutation_importance_mean": 0.0081,
+      "permutation_importance_std": 0.0052,
+      "model_importance_share": 0.0597
+    },
+    {
+      "feature": "recency",
+      "permutation_importance_mean": 0.0036,
+      "permutation_importance_std": 0.0088,
+      "model_importance_share": 0.1091
+    },
+    {
+      "feature": "age",
+      "permutation_importance_mean": 0.0036,
+      "permutation_importance_std": 0.0073,
+      "model_importance_share": 0.0375
+    },
+    {
+      "feature": "gender",
+      "permutation_importance_mean": 0.0029,
+      "permutation_importance_std": 0.003,
+      "model_importance_share": 0.009
+    },
+    {
+      "feature": "cancellation_rate",
+      "permutation_importance_mean": 0.0004,
+      "permutation_importance_std": 0.008,
+      "model_importance_share": 0.0518
+    },
+    {
+      "feature": "avg_discount",
+      "permutation_importance_mean": 0.0004,
+      "permutation_importance_std": 0.0072,
+      "model_importance_share": 0.0517
+    },
+    {
+      "feature": "tenure_days",
+      "permutation_importance_mean": -0.0009,
+      "permutation_importance_std": 0.0103,
+      "model_importance_share": 0.0465
+    },
+    {
+      "feature": "city",
+      "permutation_importance_mean": -0.005,
+      "permutation_importance_std": 0.0052,
+      "model_importance_share": 0.0162
+    }
+  ]
 }

@@ -1,0 +1,33 @@
+{% extends "base.html" %}{% from "insights/_ui.html" import subnav, hbar, pct %}{% block title %}Analytics{% endblock %}
+{% block body %}<h1>Business analytics</h1>{{ subnav() }}
+{% if k %}
+<div class="grid g4">
+ <div class="card stat"><b>{{ '{:,}'.format(k.customers) }}</b><span>customers · {{ k.products }} products</span></div>
+ <div class="card stat"><b>{{ '{:,}'.format(k.orders) }}</b><span>clean orders ({{ '{:,}'.format(k.completed) }} completed, {{ '{:,}'.format(k.cancelled) }} cancelled)</span></div>
+ <div class="card stat"><b>{{ k.revenue|inr }}</b><span>completed revenue · avg order {{ k.aov|inr }}</span></div>
+ <div class="card stat"><b>{{ k.avg_delivery }} min</b><span>avg delivery · {{ '{:,}'.format(k.late) }} completed orders over 45 min</span></div>
+</div>
+<div class="grid g2">
+ <div class="card">{{ hbar(city_chart, 'Completed revenue by city') }}</div>
+ <div class="card">{{ hbar(cat_chart, 'Completed revenue by category') }}</div>
+ <div class="card">{{ hbar(month_chart, 'Completed revenue by month', '(Apr–Sep 2025)') }}</div>
+ <div class="card">{% if seg_chart %}{{ hbar(seg_chart, 'Customers per RFM segment') }}{% else %}<p class="muted">Segments not built yet.</p>{% endif %}</div>
+</div>
+<div class="grid g3">
+ <div class="card"><h2>Lapse model</h2>{% if lapse %}{% set m = lapse.models[lapse.selected_model] %}
+  <p><b>{{ lapse.selected_model|title }}</b> selected by {{ lapse.selection_rule }}.</p>
+  <p>Lapsed-class test F1 <b>{{ '%.3f'|format(m.f1) }}</b> (precision {{ '%.3f'|format(m.precision) }}, recall {{ '%.3f'|format(m.recall) }}); cohort {{ lapse.cohort_rows }}, lapse rate {{ pct(lapse.lapse_rate) }}.</p>
+  <a href="{{ url_for('insights.segments') }}">Segments &amp; lapse &rarr;</a>{% else %}<p class="muted">Not built.</p>{% endif %}</div>
+ <div class="card"><h2>Ticket triage</h2>{% if triage %}
+  <p>{{ triage.tickets }} tickets · {{ triage.human_handoffs }} to a person · few-shot accuracy {{ pct(triage.accuracy_of_sent) }} of {{ triage.tickets_sent_to_model }} sent.</p>
+  <p>{{ '{:,}'.format(triage.tokens) }} tokens · {{ triage.retries }} retries · {{ triage.unrecovered_failures }} unrecovered.</p>
+  <a href="{{ url_for('insights.triage') }}">Triage dashboard &rarr;</a>{% else %}<p class="muted">Not built.</p>{% endif %}</div>
+ <div class="card"><h2>Refunds (ledger)</h2>
+  <p>{{ refunds.issued }} issued · {{ refunds.issued_inr|inr }}</p><p>{{ refunds.escalated }} escalated to a human · {{ refunds.rejected }} rejected by the guard</p>
+  <a href="{{ url_for('insights.refunds') }}">Refund agent &rarr;</a></div>
+</div>
+{% endif %}
+<div class="card"><h2>Pipeline outputs</h2><p class="small muted">Rebuild everything with <code>{{ rebuild }}</code>. The pages read these files; nothing is hard-coded.</p>
+<div class="tw"><table><tr><th>Part</th><th>Artifact</th><th>Status</th><th>Last updated</th></tr>
+{% for s in status %}<tr><td>{{ s.part }}</td><td><code>{{ s.path }}</code></td><td>{% if s.exists %}<span class="chip ok">✓ present</span>{% else %}<span class="chip err">✗ missing</span>{% endif %}</td><td class="small">{{ s.modified|ts if s.modified else '—' }}</td></tr>{% endfor %}
+</table></div></div>{% endblock %}

@@ -9,6 +9,7 @@
   {% if me %}
     {% if me.role == 'admin' %}
       <a class="nav {{ 'on' if request.path == '/admin' }}" href="{{ url_for('admin_home') }}">Dashboard</a>
+      <a class="nav {{ 'on' if request.path.startswith('/admin/insights') }}" href="{{ url_for('insights.overview') }}">Analytics</a>
       <a class="nav {{ 'on' if request.path.startswith('/admin/customers') }}" href="{{ url_for('admin_customers') }}">Customers</a>
       <a class="nav {{ 'on' if request.path.startswith('/admin/orders') }}" href="{{ url_for('admin_orders') }}">Orders</a>
       <a class="nav {{ 'on' if request.path.startswith('/admin/tickets') or request.path.startswith('/tickets') }}" href="{{ url_for('admin_tickets') }}">Tickets</a>

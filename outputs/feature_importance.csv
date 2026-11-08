@@ -1,0 +1,12 @@
+feature,permutation_importance_mean,permutation_importance_std,model_importance_share
+monetary,0.163117,0.039148,0.280428
+frequency,0.140722,0.049368,0.277911
+favourite_category,0.016509,0.011326,0.060132
+avg_delivery,0.008113,0.005195,0.059732
+recency,0.003599,0.008753,0.109118
+age,0.003563,0.007331,0.037482
+gender,0.00287,0.003002,0.008989
+cancellation_rate,0.000421,0.007977,0.051834
+avg_discount,0.000419,0.007157,0.051686
+tenure_days,-0.000884,0.010289,0.046493
+city,-0.004966,0.005233,0.016195

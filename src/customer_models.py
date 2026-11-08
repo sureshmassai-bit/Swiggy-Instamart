@@ -19,6 +19,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
+from sklearn.inspection import permutation_importance
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score, precision_score,
                              recall_score, silhouette_score)
@@ -126,7 +127,7 @@ def rfm_and_segments(k=None, save=True):
     if save:
         OUT.mkdir(exist_ok=True)
         rfm[["customer_id", "recency", "frequency", "monetary", "segment_id",
-             "segment_name", "is_premium"]].to_csv(OUT / "customer_segments.csv", index=False)
+             "segment_name", "is_premium"]].round({"monetary": 2}).to_csv(OUT / "customer_segments.csv", index=False)
         diagnostics.assign(selected=diagnostics.k.eq(k)).to_csv(OUT / "kmeans_diagnostics.csv", index=False)
         profile.to_csv(OUT / "segment_profile.csv", index=False)
         rfm[["recency", "frequency", "monetary"]].describe().round(3).to_csv(OUT / "rfm_summary.csv")
@@ -207,7 +208,33 @@ def _metrics(y_true, pred):
             "confusion_matrix": confusion_matrix(y_true, pred, labels=[0, 1]).tolist()}  # rows=true, cols=pred
 
 
-def build_lapse_model(save=True):
+def feature_importance(model, X_test, y_test):
+    """Which inputs drive the lapse prediction.
+
+    * permutation importance (model-agnostic): drop in test F1 when one ORIGINAL feature is shuffled
+      (10 repeats, random_state=42). It is measured on the held-out test set purely for interpretation;
+      it plays no part in training or model selection.
+    * model-native importance summed back to the original feature: impurity decrease for a random
+      forest, |coefficient| on the scaled/one-hot inputs for logistic regression.
+    """
+    perm = permutation_importance(model, X_test, y_test, scoring="f1", n_repeats=10, random_state=SEED, n_jobs=1)
+    names = model.named_steps["prep"].get_feature_names_out()
+    est = model.named_steps["model"]
+    raw = est.feature_importances_ if hasattr(est, "feature_importances_") else np.abs(est.coef_[0])
+    native = {}
+    for name, value in zip(names, raw):
+        col = name.split("__", 1)[1]
+        base = next((c for c in CATEGORICAL if col.startswith(c + "_")), col)   # one-hot column -> source feature
+        native[base] = native.get(base, 0.0) + float(value)
+    total = sum(native.values()) or 1.0
+    df = pd.DataFrame({"feature": list(X_test.columns),
+                       "permutation_importance_mean": perm.importances_mean,
+                       "permutation_importance_std": perm.importances_std})
+    df["model_importance_share"] = df.feature.map(lambda f: native.get(f, 0.0) / total)
+    return df.sort_values("permutation_importance_mean", ascending=False).reset_index(drop=True)
+
+
+def build_lapse_model(save=True, segments=None):
     customers, orders = load()
     X, y, cohort = build_lapse_dataset(customers, orders)
     assert not X.isna().any().any(), "feature columns must not contain missing values"
@@ -254,8 +281,13 @@ def build_lapse_model(save=True):
     identical = bool(np.array_equal(selected.predict(X_test), reloaded.predict(X_test)))
     assert identical, "reloaded model predictions differ"
 
+    importance = feature_importance(selected, X_test, y_test)
+    if save:
+        importance.round(6).to_csv(OUT / "feature_importance.csv", index=False)
+
     # Illustrative retention list. Premium is a whole-window (Apr-Sep) RFM label, i.e. post-hoc.
-    segments, _, _, _ = rfm_and_segments(save=save)
+    if segments is None:
+        segments, _, _, _ = rfm_and_segments(save=save)
     premium = set(segments.loc[segments.is_premium, "customer_id"])
     prob = selected.predict_proba(X_test)[:, list(selected.classes_).index(1)]
     ret = pd.DataFrame({"customer_id": X_test.index, "lapse_probability": prob, "actually_lapsed": y_test.values})
@@ -268,7 +300,8 @@ def build_lapse_model(save=True):
                "latest_feature_order_ts": str(orders[orders.order_ts < LAPSE_CUTOFF].order_ts.max()),
                "models": models, "baselines": baselines, "selected_model": selected_name,
                "selection_rule": "highest 5-fold CV F1 on the training set", "oversampling": oversampling,
-               "reload_predictions_identical": identical, "retention_list_rows": len(ret)}
+               "reload_predictions_identical": identical, "retention_list_rows": len(ret),
+               "feature_importance": importance.round(4).to_dict("records")}
     if save:
         (OUT / "lapse_metrics.json").write_text(json.dumps(summary, indent=2, default=float), encoding="utf-8")
     summary["retention_list"] = ret
@@ -282,7 +315,7 @@ def main():
     print("\nSelected K:", profile.shape[0])
     print(profile.round(2).drop(columns="action").to_string(index=False))
     print("\nPCA explained variance:", np.round(var, 4), "total", round(float(var.sum()), 4))
-    s = build_lapse_model()
+    s = build_lapse_model(segments=rfm)
     print(f"\nLapse cohort={s['cohort_rows']} lapsed={s['lapsed']} ({s['lapse_rate']:.1%}) "
           f"train={s['train_rows']} test={s['test_rows']}")
     for k, v in {**s["models"], **s["baselines"]}.items():
@@ -290,6 +323,8 @@ def main():
     print("Selected:", s["selected_model"], "|", s["selection_rule"])
     print("Oversampling:", json.dumps(s["oversampling"], default=float))
     print("Reload predictions identical:", s["reload_predictions_identical"])
+    print("\nFeature importance (permutation on test F1; model-native share):")
+    print(pd.DataFrame(s["feature_importance"]).to_string(index=False))
     print(s["retention_list"].to_string(index=False))
 
 

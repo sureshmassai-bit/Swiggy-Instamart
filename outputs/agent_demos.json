@@ -13,6 +13,28 @@
     "llm_calls": 0,
     "tools": []
   },
+  "crash_resume_run_log": [
+    {
+      "event": "crashed",
+      "status": "INTERRUPTED",
+      "tools_executed": [
+        "get_order",
+        "search_policy"
+      ],
+      "resumed": false
+    },
+    {
+      "event": "resumed_finished",
+      "status": "REFUND",
+      "tools_executed": [
+        "get_order",
+        "search_policy",
+        "calculate_refund",
+        "issue_refund"
+      ],
+      "resumed": true
+    }
+  ],
   "crash_resume": {
     "error": "crash after tool #2 (checkpoint saved)",
     "checkpoint_tools": [

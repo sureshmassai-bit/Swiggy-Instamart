@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% from "insights/_ui.html" import subnav %}{% from "_macros.html" import csrf %}{% block title %}Run {{ st.run_id }}{% endblock %}
+{% block body %}<h1>Agent run {{ st.run_id }}</h1>{{ subnav() }}
+<div class="card"><h2>Status</h2>
+{% if res %}<p><span class="chip {{ 'ok' if res.status in ('REFUND','ESCALATE') else 'warn' if res.status in ('DENIED','NOT_FOUND') else 'err' }}">{{ res.status }}</span> {{ res.final_answer }}</p>
+<p class="small muted">Refund: {{ res.refund_inr|inr if res.refund_inr is not none else '—' }} · {{ res.llm_calls }} model calls · {{ res.tokens_used }} tokens · {{ res.elapsed_seconds }} s</p>
+{% else %}<p><span class="chip warn">interrupted</span> The run stopped after {{ st.tools_executed|length }} tool call(s). The checkpoint below holds everything done so far; resuming continues from it without repeating finished steps.</p>
+<form method="post" action="{{ url_for('insights.refund_resume', run_id=st.run_id) }}">{{ csrf() }}<button type="submit" class="good">Resume from checkpoint</button></form>{% endif %}
+<p class="small muted">Limits: {{ st.limits.max_iterations }} iterations · {{ st.limits.token_limit }} tokens · {{ st.limits.time_limit_seconds }} s. Scenario: {{ st.scenario_id }}.</p></div>
+<div class="card"><h2>ReAct steps</h2>
+{% for s in st.steps %}<div class="msg"><div class="meta">Step {{ loop.index }} · tool <b>{{ s.tool }}</b> · arguments {{ s.arguments|tojson }}</div>observation: {{ s.observation|tojson }}</div>
+{% else %}<p class="muted">No tool was executed.</p>{% endfor %}</div>
+<div class="grid g2">
+<div class="card"><h2>Ledger entries for this run</h2>{% for e in ledger %}<div class="msg"><div class="meta">{{ e.timestamp[:19]|replace('T',' ') }}</div>{{ e.tool }} · {{ e.order_id }} · {{ e.refund_inr|inr }} · {{ e.outcome }}{% if e.reason %} — {{ e.reason }}{% endif %}</div>{% else %}<p class="muted small">None (no money moved in this run).</p>{% endfor %}</div>
+<div class="card"><h2>Execution log</h2>{% for e in log %}<div class="msg"><div class="meta">{{ e.timestamp[:19]|replace('T',' ') }}</div>{{ e.event|pretty }} · {{ e.status }} · tools {{ e.tools_executed|join(' → ') or '—' }}{% if e.error %} · {{ e.error }}{% endif %}</div>{% else %}<p class="muted small">No log entries.</p>{% endfor %}</div>
+</div>
+<p><a href="{{ url_for('insights.refunds') }}">&larr; Refund agent</a></p>{% endblock %}

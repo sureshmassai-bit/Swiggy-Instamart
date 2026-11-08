@@ -1,0 +1,19 @@
+{% extends "base.html" %}{% from "insights/_ui.html" import subnav %}{% from "_macros.html" import csrf %}{% block title %}Policy Q&A{% endblock %}
+{% block body %}<h1>Policy assistant (RAG)</h1>{{ subnav() }}
+<div class="card"><form method="post">{{ csrf() }}
+<label for="q">Question about Instamart policy</label><input id="q" name="question" maxlength="300" minlength="3" required value="{{ question }}" placeholder="How many working days does a refund take?">
+<p><button type="submit">Ask</button></p></form>
+{% if examples %}<p class="small muted">Try: {% for e in examples %}<span class="chip">{{ e }}</span> {% endfor %}</p>{% endif %}</div>
+{% if result %}
+<div class="card"><h2>Answer {% if result.is_fallback %}<span class="chip warn">not in the policies</span>{% else %}<span class="chip ok">grounded</span>{% endif %}</h2>
+<p class="answer">{{ result.answer }}</p>
+<p class="small muted">Sources: {{ result.sources|join(', ') }}{% if masked and (masked.email or masked.phone or masked.order_id) %} · personal data was masked before retrieval{% endif %}</p>
+<h3>Retrieved chunks (TF-IDF, cosine similarity)</h3>
+{% for h in result.retrieved %}<div class="msg"><div class="meta">#{{ loop.index }} · {{ h.source }} · score {{ '%.3f'|format(h.score) }}</div>{{ h.text }}</div>{% endfor %}</div>
+{% endif %}
+{% if summary %}<div class="card"><h2>Evaluation on <code>policy_eval.csv</code></h2>{% set e = summary.evaluation %}
+<p>{{ e.expected_doc_in_top3 }}/{{ e.questions_supported }} expected document in top 3 · {{ e.expected_doc_top1 }}/{{ e.questions_supported }} top-1 · {{ e.expected_fact_found }}/{{ e.questions_supported }} facts in the answer · {{ e.fallback_triggered }}/{{ e.unsupported_questions }} unsupported questions fell back · {{ e.false_fallbacks_on_supported }} false fallbacks.</p>
+<p class="small muted">Chunks: {% for d, n in summary.chunks.items() %}{{ d }} {{ n }}{{ ', ' if not loop.last }}{% endfor %} (40 words, 10 overlap). With 0 overlap: {{ summary.overlap_comparison.overlap_0.expected_fact_found }}/{{ e.questions_supported }} facts found.</p>
+<div class="tw"><table><tr><th>Question</th><th>Expected doc</th><th>Retrieved</th><th>Fact found</th><th>Fallback</th></tr>
+{% for r in evaluation %}<tr><td>{{ r.question }}</td><td>{{ r.expected_doc }}</td><td>{{ '✓' if r.retrieved_doc in (true,'True') else '—' }}</td><td>{{ '✓' if r.fact_found in (true,'True') else '—' }}</td><td>{{ '✓' if r.fallback in (true,'True') else '—' }}</td></tr>{% endfor %}</table></div></div>{% endif %}
+{% endblock %}

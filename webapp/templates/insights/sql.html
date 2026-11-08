@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% from "insights/_ui.html" import subnav %}{% block title %}SQL queries{% endblock %}
+{% block body %}<h1>SQL business queries</h1>{{ subnav() }}
+<p class="muted small">The seven queries in <code>sql/queries.sql</code>, run live against <code>data/instamart.db</code> (opened read-only). First 10 rows shown.</p>
+{% if error %}<div class="flash error">Could not run the queries: {{ error }}</div>{% endif %}
+{% for q in results %}
+<details class="card" {{ 'open' if loop.first }}><summary><b>{{ q.name }}</b> · {{ q.title }} <span class="chip">{{ '{:,}'.format(q.rows) }} rows</span></summary>
+<pre class="code">{{ q.sql }}</pre>
+<div class="tw"><table><tr>{% for c in q.columns %}<th>{{ c }}</th>{% endfor %}</tr>
+{% for r in q.preview %}<tr>{% for c in q.columns %}<td>{{ r[c] }}</td>{% endfor %}</tr>{% else %}<tr><td class="muted">No rows.</td></tr>{% endfor %}</table></div>
+</details>
+{% endfor %}
+{% if eda %}<div class="card"><h2>Pandas EDA notes</h2><pre class="notes">{{ eda }}</pre></div>{% endif %}
+{% endblock %}

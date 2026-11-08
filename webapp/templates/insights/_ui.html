@@ -1,0 +1,28 @@
+{% macro subnav() %}
+<nav class="subnav" aria-label="Analytics sections">
+{% for ep, label in [('insights.overview','Overview'),('insights.sql','SQL queries'),('insights.data_quality','Data quality'),('insights.segments','Segments & lapse'),('insights.triage','Ticket triage'),('insights.policy','Policy Q&A'),('insights.refunds','Refund agent')] %}
+<a class="chip {{ 'hi' if request.endpoint == ep or (ep == 'insights.refunds' and request.endpoint == 'insights.refund_run') }}" href="{{ url_for(ep) }}">{{ label }}</a>
+{% endfor %}</nav>
+{% endmacro %}
+
+{# Single-series horizontal bar chart. Each bar has a native hover tooltip (<title>); values are also printed. #}
+{% macro hbar(rows, title, note='') %}
+<figure class="chart">
+  <figcaption><b>{{ title }}</b>{% if note %} <span class="muted small">{{ note }}</span>{% endif %}</figcaption>
+  {% if rows %}
+  <svg class="hbar" viewBox="0 0 440 {{ rows|length * 28 + 4 }}" role="img" aria-label="{{ title }}">
+  {% for r in rows %}<g class="bar"><title>{{ r.label }}: {{ r.text }}</title>
+    <rect class="hit" x="0" y="{{ r.y }}" width="440" height="28"></rect>
+    <text class="lbl" x="124" y="{{ r.y + 18 }}" text-anchor="end">{{ r.label|truncate(18, True, '…') }}</text>
+    {% if r.w > 0 %}<rect class="mark" x="130" y="{{ r.y + 5 }}" width="{{ '%.1f'|format(r.w) }}" height="18" rx="4"></rect>{% endif %}
+    <text class="val" x="{{ '%.1f'|format(136 + r.w) }}" y="{{ r.y + 18 }}">{{ r.text }}</text></g>
+  {% endfor %}</svg>
+  {% else %}<p class="muted small">No data.</p>{% endif %}
+</figure>
+{% endmacro %}
+
+{% macro missing_box(names, rebuild) %}{% if names %}
+<div class="flash error" role="status">Missing pipeline output: {{ names|join(', ') }}. Rebuild with <code>{{ rebuild }}</code>.</div>
+{% endif %}{% endmacro %}
+
+{% macro pct(v) %}{{ '%.1f'|format(v * 100) }}%{% endmacro %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% from "insights/_ui.html" import subnav %}{% from "_macros.html" import csrf %}{% block title %}Refund agent{% endblock %}
+{% block body %}<h1>Refund agent</h1>{{ subnav() }}
+<div class="grid g4">
+ <div class="card stat"><b>{{ totals.n_issued }}</b><span>refunds issued · {{ totals.issued|inr }}</span></div>
+ <div class="card stat"><b>{{ totals.n_escalated }}</b><span>escalated to a human lead (over ₹1,000)</span></div>
+ <div class="card stat"><b>{{ totals.n_rejected }}</b><span>refund calls rejected by the guard</span></div>
+ <div class="card stat"><b>{{ resumable|length }}</b><span>interrupted runs waiting to resume</span></div>
+</div>
+<div class="card"><h2>Run the agent on an order</h2>
+<p class="small muted">ReAct loop with tools get_order → search_policy → calculate_refund → issue_refund / escalate_to_human. Policy: a completed order delivered in more than {{ limits.LATE_MINUTES }} minutes gets a full refund; up to ₹{{ limits.AUTO_REFUND_LIMIT_INR }} is automatic, above goes to a human. The refund tools re-check the order in the database and the ledger blocks paying twice.</p>
+<form method="post" action="{{ url_for('insights.refunds_run') }}">{{ csrf() }}
+<div class="row"><div><label for="oid">Order id</label><input id="oid" name="order_id" required pattern="[Oo][Rr][Dd]-[0-9]{6}" placeholder="ORD-100048" maxlength="10"></div>
+<div><label for="mi">Max iterations (1–{{ limits.MAX_ITERATIONS }})</label><input id="mi" name="max_iterations" type="number" min="1" max="{{ limits.MAX_ITERATIONS }}" value="{{ limits.MAX_ITERATIONS }}"></div>
+<div><label for="tl">Token limit (50–{{ limits.TOKEN_LIMIT }})</label><input id="tl" name="token_limit" type="number" min="50" max="{{ limits.TOKEN_LIMIT }}" value="{{ limits.TOKEN_LIMIT }}"></div>
+<div><label for="ts">Time limit, s (0–{{ limits.TIME_LIMIT_SECONDS }})</label><input id="ts" name="time_limit_seconds" type="number" min="0" max="{{ limits.TIME_LIMIT_SECONDS }}" value="{{ limits.TIME_LIMIT_SECONDS }}"></div>
+<div><label for="ca">Simulate crash</label><select id="ca" name="crash_after"><option value="0">No crash</option><option value="1">after tool 1</option><option value="2">after tool 2</option><option value="3">after tool 3</option></select></div>
+<div class="fit"><button type="submit">Run agent</button></div></div></form></div>
+{% if resumable %}<div class="card"><h2>Interrupted runs (checkpoint saved)</h2><div class="tw"><table><tr><th>Run</th><th>Tools done</th><th>Model calls</th><th></th></tr>
+{% for c in resumable %}<tr><td><a href="{{ url_for('insights.refund_run', run_id=c.run_id) }}">{{ c.run_id }}</a></td><td class="small">{{ c.tools_executed|join(' → ') or '—' }}</td><td>{{ c.llm_calls }}</td><td><form method="post" action="{{ url_for('insights.refund_resume', run_id=c.run_id) }}">{{ csrf() }}<button type="submit" class="good">Resume</button></form></td></tr>{% endfor %}</table></div></div>{% endif %}
+{% if scenarios %}<div class="card"><h2>Scenario checks S1–S7 <span class="muted small">(from <code>python -m src.run_scenarios</code>)</span></h2><div class="tw"><table><tr><th>Scenario</th><th>Description</th><th>Expected</th><th>Observed</th><th>Refund</th><th>Calls</th><th>Tools</th><th>Match</th></tr>
+{% for s in scenarios %}<tr><td><a href="{{ url_for('insights.refund_run', run_id=s.scenario ~ '-main') }}">{{ s.scenario }}</a></td><td class="small">{{ s.description }}</td><td>{{ s.expected_status }}</td><td>{{ s.status }}</td><td>{{ s.refund_inr|inr if s.refund_inr not in ('', none) else '—' }}</td><td>{{ s.llm_calls }}</td><td class="small">{{ s.tools }}</td><td>{% if s.match in (true,'True') %}<span class="chip ok">✓</span>{% else %}<span class="chip err">✗</span>{% endif %}</td></tr>{% endfor %}</table></div></div>{% endif %}
+<div class="card"><h2>Refund ledger <span class="muted small">(newest first, {{ ledger|length }} shown)</span></h2><div class="tw"><table><tr><th>Time (UTC)</th><th>Run</th><th>Tool</th><th>Order</th><th>Amount</th><th>Outcome</th><th>Reason</th></tr>
+{% for e in ledger %}<tr><td class="small">{{ e.timestamp[:19]|replace('T',' ') }}</td><td class="small">{% if e.run_id %}<a href="{{ url_for('insights.refund_run', run_id=e.run_id) }}">{{ e.run_id }}</a>{% endif %}</td><td>{{ e.tool|pretty }}</td><td>{{ e.order_id }}</td><td>{{ e.refund_inr|inr }}</td><td><span class="chip {{ 'ok' if e.outcome == 'issued' else 'warn' if e.outcome == 'escalated' else 'err' }}">{{ e.outcome }}</span></td><td class="small">{{ e.reason or '' }}</td></tr>
+{% else %}<tr><td colspan="7" class="muted">No ledger entries yet.</td></tr>{% endfor %}</table></div></div>
+<div class="card"><h2>Agent execution log <span class="muted small">(outputs/agent_runs.jsonl)</span></h2><div class="tw"><table><tr><th>Time (UTC)</th><th>Run</th><th>Event</th><th>Status</th><th>Order</th><th>Refund</th><th>Calls</th><th>Tokens</th><th>Seconds</th></tr>
+{% for e in runs %}<tr><td class="small">{{ e.timestamp[:19]|replace('T',' ') }}</td><td class="small"><a href="{{ url_for('insights.refund_run', run_id=e.run_id) }}">{{ e.run_id }}</a></td><td>{{ e.event|pretty }}</td><td>{{ e.status }}</td><td>{{ e.order_id or '—' }}</td><td>{{ e.refund_inr|inr if e.refund_inr is not none else '—' }}</td><td>{{ e.llm_calls }}</td><td>{{ e.tokens_used }}</td><td>{{ e.elapsed_seconds }}</td></tr>
+{% else %}<tr><td colspan="9" class="muted">No runs logged yet.</td></tr>{% endfor %}</table></div></div>
+{% endblock %}

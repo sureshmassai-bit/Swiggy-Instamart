@@ -6,6 +6,11 @@ Safety design
 * Both side-effecting tools are idempotent per order: the ledger is consulted first, so repeating a
   call (for example after a crash and resume) can never pay twice.
 * After every executed tool the loop writes an atomic checkpoint. `resume_agent` continues from it.
+* Every finished, crashed or resumed run is summarised in outputs/agent_runs.jsonl (execution log). The log
+  holds statuses, tool names, counters and the order id the tools acted on; it never stores the free-text
+  customer message.
+* One run at a time per process (`RUN_LOCK`): the loop uses module-level state, and the web app runs it
+  from request threads.
 """
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -13,6 +18,7 @@ from pathlib import Path
 import json
 import os
 import sqlite3
+import threading
 import time
 import uuid
 
@@ -23,7 +29,9 @@ ROOT = Path(__file__).resolve().parents[1]
 DB = ROOT / "data" / "instamart.db"
 OUT = ROOT / "outputs"
 LEDGER = OUT / "refund_ledger.jsonl"      # audit trail; module globals so tests/demos can redirect them
-STATE = ROOT / "state"                    # checkpoints (git-ignored)
+STATE = ROOT / "state"                    # checkpoints, one JSON file per run
+RUN_LOG = OUT / "agent_runs.jsonl"        # execution log: one line per finished / crashed run
+RUN_LOCK = threading.RLock()
 
 LATE_MINUTES = 45                         # refund policy: delivered in MORE than 45 minutes -> full refund
 AUTO_REFUND_LIMIT_INR = 1000              # above this a human lead must approve
@@ -55,13 +63,41 @@ def _read_ledger():
     return [json.loads(line) for line in LEDGER.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def _append_ledger(entry):
-    LEDGER.parent.mkdir(parents=True, exist_ok=True)
+def _append_jsonl(path, entry):
+    path.parent.mkdir(parents=True, exist_ok=True)
     entry = {"timestamp": datetime.now(timezone.utc).isoformat(), **entry}
-    with LEDGER.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(entry) + "\n")
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, default=str) + "\n")
         f.flush()
         os.fsync(f.fileno())
+
+
+def _append_ledger(entry):
+    _append_jsonl(LEDGER, entry)
+
+
+def read_ledger():
+    """Public read of the refund ledger (oldest first)."""
+    return _read_ledger()
+
+
+def read_run_log():
+    """Execution log entries (oldest first)."""
+    if not RUN_LOG.exists():
+        return []
+    return [json.loads(line) for line in RUN_LOG.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def _log_run(st, event, status, error=None):
+    order = next((s["arguments"].get("order_id") for s in st["steps"] if isinstance(s.get("arguments"), dict)
+                  and s["arguments"].get("order_id")), None)
+    refund = next((s["observation"].get("refund_inr") for s in reversed(st["steps"])
+                   if isinstance(s["observation"], dict) and "refund_inr" in s["observation"]), None)
+    _append_jsonl(RUN_LOG, {"run_id": st["run_id"], "scenario_id": st["scenario_id"], "event": event, "status": status,
+                            "order_id": order, "refund_inr": refund, "tools_executed": list(st["tools_executed"]),
+                            "iterations": st["iteration"], "llm_calls": st["llm_calls"], "tokens_used": st["tokens_used"],
+                            "elapsed_seconds": round(st["elapsed"], 3), "resumed": bool(st.get("resumed")),
+                            "limits": st["limits"], **({"error": error} if error else {})})
 
 
 def _existing(tool, order_id):
@@ -70,15 +106,17 @@ def _existing(tool, order_id):
 
 
 @contextmanager
-def isolated(ledger, state):
-    """Temporarily redirect the ledger and checkpoint directory (used by demos and tests)."""
-    global LEDGER, STATE
-    old = LEDGER, STATE
+def isolated(ledger, state, run_log=None):
+    """Temporarily redirect the ledger, checkpoint directory and run log (used by demos and tests).
+    The run log defaults to agent_runs.jsonl next to the redirected ledger."""
+    global LEDGER, STATE, RUN_LOG
+    old = LEDGER, STATE, RUN_LOG
     LEDGER, STATE = Path(ledger), Path(state)
+    RUN_LOG = Path(run_log) if run_log else LEDGER.with_name("agent_runs.jsonl")
     try:
         yield
     finally:
-        LEDGER, STATE = old
+        LEDGER, STATE, RUN_LOG = old
 
 
 # ------------------------------------------------------------------------------ tools
@@ -193,6 +231,7 @@ def _result(st, status, final):
            "llm_calls": st["llm_calls"], "tokens_used": st["tokens_used"], "elapsed_seconds": round(st["elapsed"], 3)}
     st["status"], st["result"] = "done", res
     _save_checkpoint(st)
+    _log_run(st, "resumed_finished" if st.get("resumed") else "finished", status)
     return res
 
 
@@ -238,21 +277,52 @@ def _loop(st, max_iterations, token_limit, time_limit_seconds, crash_after, cras
     return _result(st, "FALLBACK_MAX_ITERATIONS", "FALLBACK_MAX_ITERATIONS: hand off to a human agent.")
 
 
+def _run_logged(st, crash_after, crash_stage):
+    lim = st["limits"]
+    try:
+        return _loop(st, lim["max_iterations"], lim["token_limit"], lim["time_limit_seconds"], crash_after, crash_stage)
+    except Exception as exc:                       # crash: the checkpoint on disk is what resume_agent continues from
+        _log_run(st, "crashed", "INTERRUPTED", error=f"{type(exc).__name__}: {exc}")
+        raise
+
+
 def run_agent(user_message, scenario_id="demo", max_iterations=MAX_ITERATIONS, token_limit=TOKEN_LIMIT,
               time_limit_seconds=TIME_LIMIT_SECONDS, run_id=None, crash_after=None, crash_stage="after_checkpoint"):
     run_id = run_id or str(uuid.uuid4())
+    if not isinstance(user_message, str) or not user_message.strip():
+        raise ValueError("user_message must be a non-empty string")
+    if not (isinstance(max_iterations, int) and max_iterations >= 1 and token_limit > 0 and time_limit_seconds >= 0):
+        raise ValueError("limits must be positive (time limit may be 0)")
     st = {"run_id": run_id, "scenario_id": scenario_id, "status": "in_progress", "user_message": user_message,
           "messages": [{"role": "system", "content": AGENT_SYSTEM}, {"role": "user", "content": user_message}],
           "tokens_used": 0, "iteration": 0, "llm_calls": 0, "tools_executed": [], "steps": [], "elapsed": 0.0,
           "limits": {"max_iterations": max_iterations, "token_limit": token_limit, "time_limit_seconds": time_limit_seconds}}
-    _save_checkpoint(st)
-    return _loop(st, max_iterations, token_limit, time_limit_seconds, crash_after, crash_stage)
+    with RUN_LOCK:
+        _save_checkpoint(st)
+        return _run_logged(st, crash_after, crash_stage)
 
 
 def resume_agent(run_id, crash_after=None, crash_stage="after_checkpoint"):
     """Continue an interrupted run from its checkpoint. A finished run just returns its stored result."""
-    st = load_checkpoint(run_id)
-    if st["status"] == "done":
-        return st["result"]
-    lim = st["limits"]
-    return _loop(st, lim["max_iterations"], lim["token_limit"], lim["time_limit_seconds"], crash_after, crash_stage)
+    with RUN_LOCK:
+        st = load_checkpoint(run_id)
+        if st["status"] == "done":
+            return st["result"]
+        st["resumed"] = True
+        return _run_logged(st, crash_after, crash_stage)
+
+
+def list_checkpoints():
+    """Summaries of every checkpoint in STATE, newest first (status 'in_progress' means resumable)."""
+    out = []
+    for path in STATE.glob("*.json") if STATE.exists() else []:
+        try:
+            st = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        res = st.get("result") or {}
+        out.append({"run_id": st.get("run_id", path.stem), "scenario_id": st.get("scenario_id"),
+                    "status": st.get("status"), "result_status": res.get("status"), "refund_inr": res.get("refund_inr"),
+                    "tools_executed": st.get("tools_executed", []), "llm_calls": st.get("llm_calls", 0),
+                    "tokens_used": st.get("tokens_used", 0), "modified": path.stat().st_mtime})
+    return sorted(out, key=lambda r: r["modified"], reverse=True)

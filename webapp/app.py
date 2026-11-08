@@ -528,6 +528,9 @@ def create_app(cfg=None):
         path = records.sync_excel(cfg)
         return send_file(path, as_attachment=True, download_name="instamart_web_records.xlsx")
 
+    from webapp.insights import bp as insights_bp              # Parts A-D analytics, policy Q&A, refund agent
+    app.register_blueprint(insights_bp)
+
     # ------------------------------------------------------------------ errors
     @app.errorhandler(400)
     @app.errorhandler(403)

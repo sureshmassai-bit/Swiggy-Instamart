@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% from "insights/_ui.html" import subnav, hbar, missing_box %}{% block title %}Data quality{% endblock %}
+{% block body %}<h1>Data quality and cleaning</h1>{{ subnav() }}
+{{ missing_box([] if audit else ['audit_report.json'], rebuild) }}
+<div class="card"><h2>Validation checkpoints <span class="muted small">(run live on this page)</span></h2>
+{% if cp_error %}<div class="flash error">Checkpoints could not run: {{ cp_error }}</div>{% else %}
+<p>{% if checkpoints|selectattr('ok')|list|length == checkpoints|length %}<span class="chip ok">✓ ALL {{ checkpoints|length }} CHECKPOINTS PASSED</span>{% else %}<span class="chip err">✗ {{ checkpoints|rejectattr('ok')|list|length }} failed</span>{% endif %}</p>
+<div class="tw"><table><tr><th>Checkpoint</th><th>Result</th><th>Detail</th></tr>
+{% for c in checkpoints %}<tr><td>{{ c.name }}</td><td>{% if c.ok %}<span class="chip ok">✓ pass</span>{% else %}<span class="chip err">✗ fail</span>{% endif %}</td><td class="small">{{ c.detail }}</td></tr>{% endfor %}</table></div>{% endif %}</div>
+{% if audit %}
+<div class="grid g4">
+{% for t in ['customers','products','orders','tickets'] %}<div class="card stat"><b>{{ '{:,}'.format(audit[t].shape[0]) }}</b><span>raw {{ t }} rows × {{ audit[t].shape[1] }} columns</span></div>{% endfor %}
+</div>
+<div class="grid g2">
+<div class="card"><h2>Raw order issues</h2><table>{% for k, v in audit.orders_checks.items() %}<tr><th>{{ k|pretty }}</th><td>{{ v|join(', ') if v is iterable and v is not string else '{:,}'.format(v) }}</td></tr>{% endfor %}</table></div>
+<div class="card"><h2>Raw customer issues</h2><table>{% for k, v in audit.customers_checks.items() %}<tr><th>{{ k|pretty }}</th><td>{{ v }}</td></tr>{% endfor %}</table></div>
+</div>
+<div class="card">{{ hbar(missing_chart, 'Missing values in raw data', '(blank strings counted as missing)') }}
+<div class="tw"><table><tr><th>Table</th><th>Column</th><th>Missing</th><th>%</th></tr>{% for r in missing_rows %}<tr><td>{{ r.table }}</td><td>{{ r.column }}</td><td>{{ '{:,}'.format(r.missing) }}</td><td>{{ r.pct }}</td></tr>{% endfor %}</table></div></div>
+{% endif %}
+{% if cleaning %}<div class="grid g2">
+{% for t in ['customers','orders'] %}<div class="card"><h2>Cleaning: {{ t }}</h2><table>{% for k, v in cleaning[t].items() %}<tr><th>{{ k|pretty }}</th><td>{{ '{:,}'.format(v) }}</td></tr>{% endfor %}</table></div>{% endfor %}
+</div>{% endif %}
+{% endblock %}

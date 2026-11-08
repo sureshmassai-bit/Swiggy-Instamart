@@ -98,6 +98,9 @@ def run_demos(s1_message):
         res = ra.resume_agent("demo-crash")
         again = ra.resume_agent("demo-crash")             # resuming a finished run must be a no-op
         issues = [e for e in ra._read_ledger() if e["tool"] == "issue_refund" and e["outcome"] == "issued"]
+        log = ra.read_run_log()
+        demo["crash_resume_run_log"] = [{k: e[k] for k in ("event", "status", "tools_executed", "resumed")}
+                                        for e in log if e["run_id"] == "demo-crash"]
         demo["crash_resume"] = {**crashed, "status": res["status"], "refund_inr": res["refund_inr"],
                                 "tools_executed_after_resume": res["tools_executed"], "llm_calls_total": res["llm_calls"],
                                 "issue_refund_ledger_entries": len(issues), "second_resume_same_result": again == res,
@@ -119,8 +122,11 @@ def run_demos(s1_message):
 
 def main():
     OUT.mkdir(exist_ok=True)
-    if ra.LEDGER.exists():
-        ra.LEDGER.unlink()                    # regenerate the audit trail from scratch for a reproducible run
+    for path in (ra.LEDGER, ra.RUN_LOG):     # regenerate the audit trail and run log from scratch (reproducible)
+        if path.exists():
+            path.unlink()
+    for ckpt in ra.STATE.glob("S*-main.json") if ra.STATE.exists() else []:
+        ckpt.unlink()
     df, scenarios = run_scenarios()
     pd.set_option("display.width", 220, "display.max_colwidth", 80)
     print(df.drop(columns="description").to_string(index=False))
@@ -147,6 +153,9 @@ def main():
         "resuming a finished run adds no ledger entries": cr["second_resume_same_result"] and cr["ledger_entries_after_second_resume"] == 1,
         "crash between payment and checkpoint cannot double pay": demo["crash_after_payment_before_checkpoint"]["issue_refund_ledger_entries"] == 1,
     }
+    log = ra.read_run_log()
+    checks["agent_runs.jsonl has one 'finished' entry per scenario"] = sorted(
+        e["scenario_id"] for e in log if e["event"] == "finished") == sorted(EXPECTED)
     print("\nVerification:")
     for name, ok in checks.items():
         print(f"  {'PASS' if ok else 'FAIL'}: {name}")

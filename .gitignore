@@ -5,8 +5,10 @@ __pycache__/
 .env
 .pytest_cache/
 .ipynb_checkpoints/
-data/instamart.db
-state/
+# data/instamart.db and state/S*-main.json are required deliverables and ARE committed.
+# Checkpoints of ad-hoc agent runs started from the admin console stay local:
+state/web-*.json
+state/*.tmp
 outputs/agent_demo/
 
 # web app: secrets and the live database never go to git (the SQL dump and Excel record do)

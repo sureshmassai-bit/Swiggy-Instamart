@@ -26,6 +26,7 @@ DEFAULT_TOKEN_BUDGET = 100_000
 PRICE_PER_1K_TOKENS_USD = 0.0005
 DEFAULT_COST_BUDGET_USD = 0.05
 COMPLETION_HEADROOM = 60        # tokens reserved per call when checking the budget up front
+BUDGET_DEMO_TOKENS = 1000       # deliberately tiny budget for the enforcement demo (outputs/triage_budget_demo.csv)
 
 # Ordered: email first, so the digits in an address are not mistaken for a phone number.
 PATTERNS = [("email", re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+"), "[EMAIL]"),
@@ -217,7 +218,10 @@ def main():
     validate_results(few)
     validate_results(zero)
     # Budget enforcement demo: a deliberately tiny token budget must stop calls and hand off to humans.
-    demo, demo_s = run_pipeline(FEW, token_budget=1000, save_path=None)
+    demo, demo_s = run_pipeline(FEW, token_budget=BUDGET_DEMO_TOKENS, save_path=OUT / "triage_budget_demo.csv")
+    validate_results(demo)
+    assert demo_s["status_counts"].get("budget_exhausted", 0) > 0, "budget demo did not stop any model call"
+    assert demo_s["tokens"] <= BUDGET_DEMO_TOKENS, "budget demo spent more than its token budget"
     (OUT / "triage_summary.json").write_text(json.dumps({"few_shot": few_s, "zero_shot": zero_s, "budget_demo_1000_tokens": demo_s},
                                                         indent=2, default=int), encoding="utf-8")
     for label, s in [("few-shot", few_s), ("zero-shot", zero_s), ("budget demo (1000-token cap)", demo_s)]:

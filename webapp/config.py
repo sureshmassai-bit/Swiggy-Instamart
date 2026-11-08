@@ -12,6 +12,10 @@ class Config:
     app_db: Path = ROOT / "data" / "app.db"                  # users, web orders, tickets (git-ignored; dump is committed)
     core_db: Path = ROOT / "data" / "instamart.db"           # cleaned Part A database, opened READ-ONLY
     segments_csv: Path = ROOT / "outputs" / "customer_segments.csv"
+    outputs_dir: Path = ROOT / "outputs"                     # Parts A-D artifacts shown on the analytics pages (read)
+    ledger_path: Path = ROOT / "outputs" / "refund_ledger.jsonl"   # refund agent run from the admin console (write)
+    run_log_path: Path = ROOT / "outputs" / "agent_runs.jsonl"
+    state_dir: Path = ROOT / "state"                         # agent checkpoints
     excel_path: Path = ROOT / "data" / "records" / "instamart_web_records.xlsx"
     dump_dir: Path = ROOT / "data" / "dump"
     credentials_dir: Path = ROOT / "credentials"             # git-ignored

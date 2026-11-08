@@ -1,0 +1,38 @@
+{% extends "base.html" %}{% from "insights/_ui.html" import subnav, hbar, missing_box, pct %}{% from "_macros.html" import csrf %}{% block title %}Ticket triage{% endblock %}
+{% block body %}<h1>Support ticket triage</h1>{{ subnav() }}
+{{ missing_box(missing, rebuild) }}
+{% if df is not none %}
+<div class="grid g4">
+ <div class="card stat"><b>{{ few.tickets }}</b><span>tickets triaged · {{ few.tickets_sent_to_model }} sent to the model</span></div>
+ <div class="card stat"><b>{{ pct(few.accuracy_of_sent) }}</b><span>few-shot accuracy (zero-shot {{ pct(zero.accuracy_of_sent) }})</span></div>
+ <div class="card stat"><b>{{ '{:,}'.format(few.tokens) }}</b><span>tokens · ≈ ${{ '%.4f'|format(few.estimated_cost_usd) }} (zero-shot {{ '{:,}'.format(zero.tokens) }})</span></div>
+ <div class="card stat"><b>{{ few.retries }}</b><span>retries after transient errors · {{ few.unrecovered_failures }} unrecovered</span></div>
+ <div class="card stat"><b>{{ few.human_handoffs }}</b><span>handed to a person</span></div>
+</div>
+<div class="grid g3">
+ <div class="card">{{ hbar(status_chart, 'Triage outcome') }}</div>
+ <div class="card">{{ hbar(route_chart, 'Route') }}</div>
+ <div class="card">{{ hbar(cat_chart, 'Category (classified tickets)') }}</div>
+</div>
+<div class="grid g2">
+<div class="card"><h2>Privacy and guardrails</h2><table>
+<tr><th>Masked before any model call</th><td>{{ few.redactions.email }} emails · {{ few.redactions.phone }} phones · {{ few.redactions.order_id }} order ids</td></tr>
+<tr><th>Model calls / failures</th><td>{{ few.model_calls }} calls · {{ few.transient_failures }} transient failures · backoff {{ few.backoff_seconds }} s</td></tr>
+<tr><th>Budgets</th><td>{{ '{:,}'.format(few.token_budget) }} tokens · ${{ few.cost_budget_usd }}</td></tr>
+<tr><th>Routing</th><td class="small">guardrail/invalid/budget → human review · fraud → security team (HIGH) · Premium → premium desk (HIGH) · else support queue</td></tr></table></div>
+<div class="card"><h2>Budget enforcement demo</h2>{% if demo %}
+<p>With a {{ '{:,}'.format(demo.token_budget) }}-token budget: <b>{{ demo.status_counts.get('classified_json', 0) }}</b> classified, <b>{{ demo.status_counts.get('budget_exhausted', 0) }}</b> stopped as <code>budget_exhausted</code> and sent to a person; {{ demo.tokens }} tokens spent.</p>
+<p class="small muted">{{ 'Saved to outputs/triage_budget_demo.csv.' if budget_csv else 'outputs/triage_budget_demo.csv is missing.' }}</p>{% endif %}</div>
+</div>
+<div class="card"><h2>Try the triage pipeline</h2><p class="small muted">Runs the same Part C code: PII masked, length guard, few-shot prompt, retries, validation, routing.</p>
+<form method="post" action="{{ url_for('insights.triage_try') }}">{{ csrf() }}<label for="tt">Ticket text</label><textarea id="tt" name="text" maxlength="4000" required placeholder="e.g. I was charged twice, call me on 9876543210"></textarea>
+<label class="inline-check"><input type="checkbox" name="premium" value="1"> Customer is Premium</label><button type="submit">Triage</button></form></div>
+<div class="card"><h2>Results ({{ total }})</h2>
+<form method="get" class="row">{% for f in ['route','status','category','segment_name'] %}<div><label for="f-{{ f }}">{{ f|pretty }}</label><select id="f-{{ f }}" name="{{ f }}"><option value="">All</option>{% for o in options[f] %}<option value="{{ o }}" {{ 'selected' if o == chosen[f] }}>{{ o|pretty }}</option>{% endfor %}</select></div>{% endfor %}<div class="fit"><button type="submit">Filter</button> <a class="btn ghost" href="{{ url_for('insights.triage') }}">Reset</a></div></form>
+<div class="tw"><table><tr><th>Ticket</th><th>Customer</th><th>Segment</th><th>Status</th><th>Category</th><th>Route</th><th>Attempts</th><th>Tokens</th><th>Handoff reason</th></tr>
+{% for r in rows %}<tr><td>{{ r.ticket_id }}</td><td>{{ r.customer_id }}</td><td>{{ r.segment_name }}</td><td>{{ r.status|pretty }}</td><td>{{ r.category or '—' }}</td><td>{{ r.route|pretty }}{% if r.priority == 'HIGH' %} <span class="chip hi">HIGH</span>{% endif %}</td><td>{{ r.attempts }}</td><td>{{ r.tokens_used }}</td><td class="small">{{ r.handoff_reason }}</td></tr>
+{% else %}<tr><td colspan="9" class="muted">No tickets match.</td></tr>{% endfor %}</table></div>
+<div class="pager small muted"><span>page {{ page }} of {{ pages }}</span>
+{% set q = chosen %}{% if page > 1 %}<a href="{{ url_for('insights.triage', page=page-1, **q) }}">&larr; Previous</a>{% endif %}
+{% if page < pages %}<a href="{{ url_for('insights.triage', page=page+1, **q) }}">Next &rarr;</a>{% endif %}</div></div>
+{% endif %}{% endblock %}

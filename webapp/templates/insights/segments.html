@@ -1,0 +1,34 @@
+{% extends "base.html" %}{% from "insights/_ui.html" import subnav, hbar, missing_box, pct %}{% block title %}Segments & lapse{% endblock %}
+{% block body %}<h1>Customer segments and lapse prediction</h1>{{ subnav() }}
+{{ missing_box(missing, rebuild) }}
+<div class="card"><h2>RFM segments (K-means)</h2><div class="tw"><table><tr><th>Segment</th><th>Customers</th><th>Avg recency (days)</th><th>Avg frequency</th><th>Avg monetary</th><th>Recommended action</th></tr>
+{% for p in profile %}<tr><td><a href="{{ url_for('insights.segments', segment=p.segment_name) }}">{{ p.segment_name }}</a></td><td>{{ p.size }}</td><td>{{ '%.1f'|format(p.recency) }}</td><td>{{ '%.1f'|format(p.frequency) }}</td><td>{{ p.monetary|inr }}</td><td class="small">{{ p.action }}</td></tr>{% endfor %}</table></div></div>
+<div class="grid g2">
+ <div class="card">{{ hbar(sil_chart, 'Silhouette score by K', '(higher is better)') }}</div>
+ <div class="card">{{ hbar(inertia_chart, 'Inertia by K (elbow)', '(lower is tighter)') }}</div>
+</div>
+<div class="tw card"><table><tr><th>K</th><th>Inertia</th><th>Silhouette</th><th>Selected</th></tr>{% for d in diag %}<tr><td>{{ d.k }}</td><td>{{ '%.1f'|format(d.inertia) }}</td><td>{{ '%.3f'|format(d.silhouette) }}</td><td>{{ '✓' if d.selected in (true, 'True') }}</td></tr>{% endfor %}</table></div>
+{% if has_pca %}<div class="card"><h2>PCA projection of the segments</h2><img class="plot" src="{{ url_for('insights.pca_png') }}" alt="Scatter plot of customers on the first two principal components of scaled RFM, coloured by segment"></div>{% endif %}
+
+<div class="card"><h2>Browse a segment</h2>
+<form method="get" class="row"><div><label for="seg">Segment</label><select id="seg" name="segment"><option value="">Choose…</option>{% for n in names %}<option {{ 'selected' if n == name }}>{{ n }}</option>{% endfor %}</select></div><div class="fit"><button type="submit">Show</button></div></form>
+{% if name %}<p class="small muted">{{ member_total }} customers in {{ name }}; top 50 by monetary value shown.</p>
+<div class="tw"><table><tr><th>Customer</th><th>Recency</th><th>Frequency</th><th>Monetary</th></tr>{% for m in members %}<tr><td><a href="{{ url_for('admin_customer', customer_id=m.customer_id) }}">{{ m.customer_id }}</a></td><td>{{ m.recency }}</td><td>{{ m.frequency }}</td><td>{{ m.monetary|inr }}</td></tr>{% endfor %}</table></div>{% endif %}</div>
+
+{% if lapse %}
+<div class="card"><h2>Lapse model</h2>
+<p class="small">Cohort: {{ lapse.cohort_rows }} customers with a completed order before 2025-09-01; {{ lapse.lapsed }} lapsed ({{ pct(lapse.lapse_rate) }}). Train {{ lapse.train_rows }} / test {{ lapse.test_rows }} (stratified). Features use orders up to {{ lapse.latest_feature_order_ts }} only. Selected: <b>{{ lapse.selected_model }}</b> ({{ lapse.selection_rule }}).</p>
+<div class="tw"><table><tr><th>Model</th><th>Best params</th><th>CV F1</th><th>Precision</th><th>Recall</th><th>Test F1</th><th>Confusion [[TN,FP],[FN,TP]]</th></tr>
+{% for n, m in lapse.models.items() %}<tr><td>{{ n }}{% if n == lapse.selected_model %} <span class="chip ok">selected</span>{% endif %}</td><td class="small">{{ m.best_params }}</td><td>{{ '%.3f'|format(m.cv_f1) }}</td><td>{{ '%.3f'|format(m.precision) }}</td><td>{{ '%.3f'|format(m.recall) }}</td><td><b>{{ '%.3f'|format(m.f1) }}</b></td><td>{{ m.confusion_matrix }}</td></tr>{% endfor %}
+{% for n, m in lapse.baselines.items() %}<tr class="muted"><td>baseline: {{ n }}</td><td></td><td></td><td>{{ '%.3f'|format(m.precision) }}</td><td>{{ '%.3f'|format(m.recall) }}</td><td>{{ '%.3f'|format(m.f1) }}</td><td>{{ m.confusion_matrix }}</td></tr>{% endfor %}
+{% for n in ['logistic','forest'] %}{% set m = lapse.oversampling[n] %}<tr><td>{{ n }} + training-set oversampling</td><td></td><td></td><td>{{ '%.3f'|format(m.precision) }}</td><td>{{ '%.3f'|format(m.recall) }}</td><td>{{ '%.3f'|format(m.f1) }}</td><td>{{ m.confusion_matrix }}</td></tr>{% endfor %}
+</table></div>
+<p class="small muted">Model file reload gives identical predictions: {{ 'yes' if lapse.reload_predictions_identical else 'NO' }}.</p></div>
+{% endif %}
+{% if importance %}<div class="card">{{ hbar(imp_chart, 'Feature importance', '(drop in test F1 when the feature is shuffled; 10 repeats)') }}
+<div class="tw"><table><tr><th>Feature</th><th>Permutation mean</th><th>± std</th><th>Model-native share</th></tr>{% for r in importance %}<tr><td>{{ r.feature }}</td><td>{{ '%.4f'|format(r.permutation_importance_mean) }}</td><td>{{ '%.4f'|format(r.permutation_importance_std) }}</td><td>{{ pct(r.model_importance_share) }}</td></tr>{% endfor %}</table></div></div>{% endif %}
+<div class="card"><h2>Retention list — Premium customers most likely to lapse</h2>
+<p class="small muted">Illustrative: test-set Premium customers ranked by predicted lapse probability. Premium is a whole-window label, so this is not a leakage-free evaluation.</p>
+<div class="tw"><table><tr><th>Customer</th><th>Lapse probability</th><th>Actually lapsed</th><th>Suggested action</th></tr>
+{% for r in retention %}<tr><td><a href="{{ url_for('admin_customer', customer_id=r.customer_id) }}">{{ r.customer_id }}</a></td><td>{{ pct(r.lapse_probability) }}</td><td>{{ 'yes' if r.actually_lapsed in (1, '1') else 'no' }}</td><td class="small">Proactive premium-desk call and a personalised retention offer</td></tr>{% else %}<tr><td colspan="4" class="muted">No retention list.</td></tr>{% endfor %}</table></div></div>
+{% endblock %}
